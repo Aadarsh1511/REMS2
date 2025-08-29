@@ -1,0 +1,226 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Download, AlertTriangle, Calendar, User, Building2 } from "lucide-react";
+
+const SummonsNotices = () => {
+  const notices = [
+    {
+      id: "SN001",
+      title: "Property Verification Notice",
+      type: "Verification",
+      date: "2024-01-15",
+      status: "Active",
+      description: "Notice for property verification at Andheri West",
+      priority: "high"
+    },
+    {
+      id: "SN002", 
+      title: "Document Submission Reminder",
+      type: "Reminder",
+      date: "2024-01-10",
+      status: "Pending",
+      description: "Submission of NOC documents required",
+      priority: "medium"
+    },
+    {
+      id: "SN003",
+      title: "Legal Compliance Notice",
+      type: "Legal",
+      date: "2024-01-05",
+      status: "Resolved",
+      description: "RERA compliance verification completed",
+      priority: "low"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-primary/5 via-background to-accent/5 py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-4xl mx-auto">
+            <Badge variant="secondary" className="mb-4">Legal Documentation</Badge>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Summons & Notices
+            </h1>
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+              Access and manage all legal documents, summons, and official notices related to your properties and transactions.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Notice Search */}
+      <section className="py-12 bg-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="p-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-6 w-6 text-primary" />
+                Search Notices
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="notice-id">Notice ID</Label>
+                  <Input id="notice-id" placeholder="Enter notice ID" />
+                </div>
+                <div>
+                  <Label htmlFor="notice-type">Notice Type</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="verification">Verification</SelectItem>
+                      <SelectItem value="legal">Legal</SelectItem>
+                      <SelectItem value="reminder">Reminder</SelectItem>
+                      <SelectItem value="compliance">Compliance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="date-range">Date Range</Label>
+                  <Input id="date-range" type="date" />
+                </div>
+                <div className="flex items-end">
+                  <Button className="w-full">Search Notices</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Active Notices */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Active Notices & Summons</h2>
+          <div className="space-y-6">
+            {notices.map((notice) => (
+              <Card key={notice.id} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-4">
+                      <Badge variant={notice.priority === 'high' ? 'destructive' : notice.priority === 'medium' ? 'default' : 'secondary'}>
+                        {notice.type}
+                      </Badge>
+                      <Badge variant="outline">{notice.status}</Badge>
+                      <span className="text-sm text-muted-foreground">ID: {notice.id}</span>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">{notice.title}</h3>
+                    <p className="text-muted-foreground mb-4">{notice.description}</p>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {notice.date}
+                      </div>
+                      {notice.priority === 'high' && (
+                        <div className="flex items-center gap-1 text-destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                          High Priority
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                    <Button size="sm">View Details</Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Submit Response */}
+      <section className="py-20 bg-muted/20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-8">
+              <CardHeader>
+                <CardTitle className="text-center">Submit Response to Notice</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="response-notice-id">Notice ID *</Label>
+                    <Input id="response-notice-id" placeholder="Enter notice ID" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="response-type">Response Type *</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select response type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="compliance">Compliance Confirmation</SelectItem>
+                        <SelectItem value="objection">Objection</SelectItem>
+                        <SelectItem value="clarification">Request for Clarification</SelectItem>
+                        <SelectItem value="documents">Document Submission</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="response-details">Response Details *</Label>
+                  <Textarea 
+                    id="response-details" 
+                    placeholder="Provide detailed response to the notice..."
+                    className="min-h-32"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="supporting-docs">Supporting Documents</Label>
+                  <Input id="supporting-docs" type="file" multiple accept=".pdf,.doc,.docx,.jpg,.png" />
+                  <p className="text-sm text-muted-foreground mt-1">Upload supporting documents (PDF, DOC, Images)</p>
+                </div>
+                <Button className="w-full" size="lg">Submit Response</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Legal Resources */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Legal Resources & Guidelines</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="p-6 text-center">
+              <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-4">Legal Templates</h3>
+              <p className="text-muted-foreground mb-4">Download standard legal document templates and formats.</p>
+              <Button variant="outline">Download Templates</Button>
+            </Card>
+            <Card className="p-6 text-center">
+              <User className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-4">Legal Consultation</h3>
+              <p className="text-muted-foreground mb-4">Connect with verified legal experts for consultation.</p>
+              <Button variant="outline">Book Consultation</Button>
+            </Card>
+            <Card className="p-6 text-center">
+              <Building2 className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-4">RERA Guidelines</h3>
+              <p className="text-muted-foreground mb-4">Understand RERA compliance and legal requirements.</p>
+              <Button variant="outline">View Guidelines</Button>
+            </Card>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default SummonsNotices;
