@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,7 +48,7 @@ const RentReceipt = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const generateReceipt = () => {
+  const generateReceipt = async () => {
     if (!validateForm()) return;
 
     const receipt = {
@@ -57,17 +58,59 @@ const RentReceipt = () => {
       id: Date.now()
     };
 
-    setGeneratedReceipt(receipt);
+    try {
+      console.log('Sending rent receipt data:', receipt);
+
+      // Get token for authentication
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('access_token');
+      
+      const response = await fetch('http://127.0.0.1:8000/api/rent-receipts/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          receipt_number: receipt.receiptNumber,
+          tenant_name: receipt.tenantName,
+          tenant_address: receipt.tenantAddress || '',
+          landlord_name: receipt.landlordName,
+          landlord_address: receipt.landlordAddress || '',
+          property_address: receipt.propertyAddress || '',
+          rent_amount: receipt.rentAmount,
+          period: receipt.period,
+          payment_method: receipt.paymentMethod,
+          payment_date: receipt.paymentDate ? format(receipt.paymentDate, 'yyyy-MM-dd') : '',
+          additional_notes: receipt.additionalNotes || ''
+        })
+      });
+
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('API Response:', result);
+
+      if (response.ok) {
+        toast.success("Rent receipt generated and saved successfully!");
+        setGeneratedReceipt(receipt);
+      } else {
+        throw new Error(result.message || 'Failed to save receipt');
+      }
+    } catch (error) {
+      console.error('Error saving receipt:', error);
+      toast.error("Failed to save receipt. Please try again.");
+      // Still show the receipt even if save fails
+      setGeneratedReceipt(receipt);
+    }
   };
 
   const downloadPDF = () => {
     // In a real implementation, this would generate and download a PDF
-    alert("PDF download functionality would be implemented here");
+    toast.info("PDF download functionality would be implemented here");
   };
 
   const emailReceipt = () => {
     // In a real implementation, this would email the receipt
-    alert("Email functionality would be implemented here");
+    toast.info("Email functionality would be implemented here");
   };
 
   const printReceipt = () => {
@@ -83,18 +126,23 @@ const RentReceipt = () => {
     "June 2024",
     "Q1 2024",
     "Q2 2024",
-    "H1 2024"
+    "H1 2024",
+    "monthly",
+    "quarterly",
+   
+    "yearly"
   ];
 
-  const paymentMethods = [
-    "Cash",
-    "Bank Transfer",
-    "UPI",
-    "Cheque",
-    "Online Banking",
-    "Credit Card",
-    "Debit Card"
-  ];
+ const paymentMethods = [
+  { label: "Cash", value: "cash" },
+  { label: "Bank Transfer", value: "bank_transfer" },
+  { label: "UPI", value: "upi" },
+  { label: "Cheque", value: "cheque" },
+  { label: "Online Banking", value: "online_banking" },
+  { label: "Credit Card", value: "credit_card" },
+  { label: "Debit Card", value: "debit_card" }
+];
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -294,7 +342,7 @@ const RentReceipt = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {paymentMethods.map(method => (
-                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                            <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

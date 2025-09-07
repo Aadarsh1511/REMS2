@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import {
   Card,
   CardContent,
@@ -21,7 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import {
   Upload,
   MapPin,
@@ -201,12 +202,12 @@ const handleSubmit = async (e?: React.FormEvent) => {
     const token = localStorage.getItem("access_token");
 
     if (!token) {
-      alert("Authentication Error");
+      toast.error("Authentication Error");
       return;
     }
 
     if (imageFiles.length === 0) {
-      alert("Please upload at least one image");
+      toast.error("Please upload at least one image");
       return;
     }
 
@@ -268,7 +269,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
       }
     }
 
-    alert("Property and amenities added successfully!");
+    toast.success("Property and amenities added successfully!");
 
     // Clear form data
     setFormData({
@@ -297,27 +298,27 @@ const handleSubmit = async (e?: React.FormEvent) => {
     console.error("Error adding property:", error);
     if (error.response?.data) {
       console.error("Backend error details:", error.response.data);
-      alert(`Failed to add property: ${JSON.stringify(error.response.data)}`);
+      toast.error(`Failed to add property: ${JSON.stringify(error.response.data)}`);
     } else {
-      alert("Failed to add property. Please try again.");
+      toast.error("Failed to add property. Please try again.");
     }
   }
 };
 
-  const amenitiesList = [
-    "Swimming Pool",
-    "Gym",
-    "Parking",
-    "Garden",
-    "Security",
-    "Elevator",
-    "Power Backup",
-    "Water Supply",
-    "Internet",
-    "Balcony",
-    "Terrace",
-    "Maintenance",
-  ];
+  // const amenitiesList = [
+  //   "Swimming Pool",
+  //   "Gym",
+  //   "Parking",
+  //   "Garden",
+  //   "Security",
+  //   "Elevator",
+  //   "Power Backup",
+  //   "Water Supply",
+  //   "Internet",
+  //   "Balcony",
+  //   "Terrace",
+  //   "Maintenance",
+  // ];
 
   // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   //   const files = e.target.files;
@@ -603,7 +604,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                       </div>
                     </div>
 
-                    <div>
+                    {/* <div>
                       <Label className="text-base font-medium mb-4 block">
                         Property Amenities
                       </Label>
@@ -638,7 +639,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </div> */}
 
                     {formData.amenities.length > 0 && (
                       <div>
@@ -761,7 +762,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                       </div>
                     </div>
 
-                    <div className="mt-8">
+                    {/* <div className="mt-8">
                       <Label className="text-base font-medium mb-4 block">
                         Map Location
                       </Label>
@@ -775,7 +776,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 )}
 
@@ -784,20 +785,20 @@ const handleSubmit = async (e?: React.FormEvent) => {
                   <div className="space-y-6">
                     <div className="text-center mb-8">
                       <Camera className="h-12 w-12 mx-auto text-primary mb-4" />
-                      <h2 className="text-2xl font-bold">Images & Documents</h2>
+                      <h2 className="text-2xl font-bold">Images </h2>
                       <p className="text-muted-foreground">
-                        Upload high-quality photos and legal documents
+                        Upload high-quality photos 
                       </p>
                     </div>
 
                     <Tabs defaultValue="images" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
+                      <TabsList className="grid grid-cols-1 w-full ">
                         <TabsTrigger value="images">
                           Property Images
                         </TabsTrigger>
-                        <TabsTrigger value="documents">
+                        {/* <TabsTrigger value="documents">
                           Legal Documents
-                        </TabsTrigger>
+                        </TabsTrigger> */}
                       </TabsList>
 
                       <TabsContent value="images" className="space-y-6">
@@ -877,7 +878,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                         )}
                       </TabsContent>
 
-                      <TabsContent value="documents" className="space-y-6">
+                      {/* <TabsContent value="documents" className="space-y-6">
                         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
                           <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                           <h3 className="text-lg font-medium mb-2">
@@ -949,7 +950,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                             </div>
                           </div>
                         )}
-                      </TabsContent>
+                      </TabsContent> */}
                     </Tabs>
                   </div>
                 )}
@@ -1258,12 +1259,12 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                 </span>{" "}
                                 {formData.bathrooms || "Not set"}
                               </p>
-                              <p>
+                              {/* <p>
                                 <span className="text-muted-foreground">
                                   Amenities:
                                 </span>{" "}
                                 {formData.amenities.length} selected
-                              </p>
+                              </p> */}
                             </div>
                           </Card>
 

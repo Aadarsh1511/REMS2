@@ -42,6 +42,78 @@ const BookVisit = () => {
     parking: false,
     refreshments: false
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // API call function for booking visit
+  const bookVisit = async (visitData: any) => {
+    const token = localStorage.getItem("access_token");
+    
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to book a visit",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/visits/", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(visitData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Visit booked successfully:", result);
+        return true;
+      } else {
+        const errorData = await response.json();
+        console.error("API Error Details:", errorData);
+        console.error("Response Status:", response.status);
+        
+        // Show specific error message if available
+        let errorMessage = "Failed to book visit. Please try again.";
+        if (errorData.property && Array.isArray(errorData.property)) {
+          errorMessage = `Property Error: ${errorData.property.join(', ')}`;
+        }
+        
+        toast({
+          title: "Booking Failed",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("Network Error:", error);
+      toast({
+        title: "Network Error",
+        description: "Unable to connect to server. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Get current user ID (you may need to adjust this based on your auth system)
+  const getCurrentUserId = () => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        return user.id || user.user_id || 1; // Fallback to 1 if no ID found
+      } catch (e) {
+        return 1; // Default fallback
+      }
+    }
+    return 1; // Default fallback
+  };
 
   const handleCall = (phoneNumber: string) => {
     window.location.href = `tel:${phoneNumber}`;
@@ -59,7 +131,7 @@ const BookVisit = () => {
     });
   };
 
-  const handleBookingConfirm = () => {
+  const handleBookingConfirm = async () => {
     if (!formData.name || !formData.phone || !formData.email) {
       toast({
         title: "Missing Information",
@@ -69,14 +141,87 @@ const BookVisit = () => {
       return;
     }
 
-    toast({
-      title: "Visit Booked Successfully!",
-      description: "You'll receive a confirmation email shortly.",
+    if (!selectedDate || !selectedTime || !selectedAgent) {
+      toast({
+        title: "Incomplete Booking",
+        description: "Please select date, time, and agent.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Ensure selectedAgent is a valid number
+    if (typeof selectedAgent !== 'number' || selectedAgent <= 0) {
+      toast({
+        title: "Invalid Agent",
+        description: "Please select a valid agent.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log("Agent validation:", {
+      selectedAgent,
+      type: typeof selectedAgent,
+      isNumber: typeof selectedAgent === 'number',
+      isValid: selectedAgent > 0
     });
 
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 2000);
+    setIsSubmitting(true);
+
+    console.log("User form data:", formData);
+    console.log("Selected details:", {
+      date: selectedDate,
+      time: selectedTime,
+      agent: selectedAgent,
+      visitType: visitType
+    });
+
+    // Prepare appointment data for API
+    const appointmentDateTime = new Date(selectedDate);
+    const [time, period] = selectedTime.split(' ');
+    const [hours, minutes] = time.split(':');
+    let hour24 = parseInt(hours);
+    
+    if (period === 'PM' && hour24 !== 12) hour24 += 12;
+    if (period === 'AM' && hour24 === 12) hour24 = 0;
+    
+    appointmentDateTime.setHours(hour24, parseInt(minutes), 0, 0);
+
+    // Visits API requires: user, property, preferred_time
+    const visitData = {
+      user: getCurrentUserId(),
+      property: 1, // You can get this from URL params or props
+      preferred_time: appointmentDateTime.toISOString()
+    };
+
+    console.log("Visit API payload:", visitData);
+    console.log("Additional form data (for reference):", {
+      visitor_name: formData.name,
+      visitor_phone: formData.phone,
+      visitor_email: formData.email,
+      number_of_visitors: formData.visitors,
+      special_requirements: formData.requirements,
+      parking_required: formData.parking,
+      refreshments_required: formData.refreshments,
+      visit_type: visitType,
+      selected_agent: selectedAgent
+    });
+
+    const success = await bookVisit(visitData); // Try test payload first
+    
+    setIsSubmitting(false);
+
+    if (success) {
+      toast({
+        title: "Visit Booked Successfully!",
+        description: "You'll receive a confirmation email shortly.",
+      });
+
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+    }
   };
 
   const timeSlots = [
@@ -532,9 +677,13 @@ const BookVisit = () => {
                         <Button variant="outline" onClick={() => setStep(4)}>
                           Back to Edit
                         </Button>
-                        <Button className="btn-hero pulse-primary" onClick={handleBookingConfirm}>
+                        <Button 
+                          className="btn-hero pulse-primary" 
+                          onClick={handleBookingConfirm}
+                          disabled={isSubmitting}
+                        >
                           <CheckCircle className="mr-2 h-4 w-4" />
-                          Confirm Booking
+                          {isSubmitting ? "Booking..." : "Confirm Booking"}
                         </Button>
                       </div>
                     </div>

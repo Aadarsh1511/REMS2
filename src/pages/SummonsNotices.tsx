@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Download, AlertTriangle, Calendar, User, Building2 } from "lucide-react";
+import { useState } from "react";
 
 const SummonsNotices = () => {
   const notices = [
@@ -37,6 +38,100 @@ const SummonsNotices = () => {
       priority: "low"
     }
   ];
+
+
+  const [formData, setFormData] = useState({
+    notice_id: '',
+    response_type: '',
+    response_details: '',
+    supporting_document: null
+  });
+
+  // UI state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    if (submitStatus === 'error') {
+      setSubmitStatus(null);
+      setErrorMessage('');
+    }
+  };
+
+  // Handle file upload
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFormData(prev => ({
+      ...prev,
+      supporting_document: file
+    }));
+  };
+
+  // Submit to backend API
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.notice_id || !formData.response_type || !formData.response_details) {
+      setSubmitStatus('error');
+      setErrorMessage('Please fill in all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+    setErrorMessage('');
+
+    try {
+      const submitData = new FormData();
+      submitData.append('notice_id', formData.notice_id);
+      submitData.append('response_type', formData.response_type);
+      submitData.append('response_details', formData.response_details);
+      
+      if (formData.supporting_document) {
+        submitData.append('supporting_document', formData.supporting_document);
+      }
+
+      // Get auth token - adjust based on your auth system
+      const token = localStorage.getItem('access_token');
+
+      const response = await fetch('http://127.0.0.1:8000/api/summons-notices/', {
+        method: 'POST',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: submitData
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        // Reset form
+        setFormData({
+          notice_id: '',
+          response_type: '',
+          response_details: '',
+          supporting_document: null
+        });
+        // Clear file input
+        const fileInput = document.getElementById('supporting-docs');
+        if (fileInput) fileInput.value = '';
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || errorData.message || 'Failed to submit response');
+      }
+    } catch (error) {
+      setSubmitStatus('error');
+      setErrorMessage(error.message || 'An error occurred while submitting');
+      console.error('Submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,11 +250,14 @@ const SummonsNotices = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="response-notice-id">Notice ID *</Label>
-                    <Input id="response-notice-id" placeholder="Enter notice ID" required />
+                    <Input id="response-notice-id" placeholder="Enter notice ID" value={formData.notice_id}
+                      onChange={(e) => handleInputChange('notice_id', e.target.value)} required />
                   </div>
                   <div>
                     <Label htmlFor="response-type">Response Type *</Label>
-                    <Select>
+                    <Select                       value={formData.response_type} 
+                      onValueChange={(value) => handleInputChange('response_type', value)}
+>
                       <SelectTrigger>
                         <SelectValue placeholder="Select response type" />
                       </SelectTrigger>
@@ -167,7 +265,7 @@ const SummonsNotices = () => {
                         <SelectItem value="compliance">Compliance Confirmation</SelectItem>
                         <SelectItem value="objection">Objection</SelectItem>
                         <SelectItem value="clarification">Request for Clarification</SelectItem>
-                        <SelectItem value="documents">Document Submission</SelectItem>
+                        <SelectItem value="document">Document Submission</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -177,16 +275,22 @@ const SummonsNotices = () => {
                   <Textarea 
                     id="response-details" 
                     placeholder="Provide detailed response to the notice..."
-                    className="min-h-32"
+                    className="min-h-32"  value={formData.response_details}
+                    onChange={(e) => handleInputChange('response_details', e.target.value)}
                     required
                   />
                 </div>
                 <div>
                   <Label htmlFor="supporting-docs">Supporting Documents</Label>
-                  <Input id="supporting-docs" type="file" multiple accept=".pdf,.doc,.docx,.jpg,.png" />
+                  <Input id="supporting-docs" type="file"  accept=".pdf,.doc,.docx,.jpg,.png" onChange={handleFileChange} />
                   <p className="text-sm text-muted-foreground mt-1">Upload supporting documents (PDF, DOC, Images)</p>
+                  {formData.supporting_document && (
+                    <p className="text-sm text-green-600 mt-1">
+                      Selected: {formData.supporting_document.name}
+                    </p>
+                  )}
                 </div>
-                <Button className="w-full" size="lg">Submit Response</Button>
+                <Button className="w-full" size="lg"  onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? 'Submitting...' : 'Submit Response'}</Button>
               </CardContent>
             </Card>
           </div>

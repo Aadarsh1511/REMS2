@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { 
   Phone, 
   Mail, 
@@ -25,6 +27,558 @@ import {
 } from "lucide-react";
 
 const CustomerService = () => {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    category: 'search',
+    subject: '',
+    message: '',
+    priority: 'medium'
+  });
+  const [loading, setLoading] = useState(false);
+
+//  const handleSubmit = async (e) => {
+//   e.preventDefault();
+  
+//   if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+//     toast({
+//       title: "Required Fields Missing",
+//       description: "Please fill in all required fields.",
+//       variant: "destructive"
+//     });
+//     return;
+//   }
+
+//   setLoading(true);
+
+//   try {
+//     const token = localStorage.getItem('access_token');
+//     const currentUserId = localStorage.getItem('user_id');
+    
+//     // User ID validation
+//     if (!currentUserId) {
+//       toast({
+//         title: "Authentication Required",
+//         description: "Please login to submit a support request.",
+//         variant: "destructive"
+//       });
+//       setLoading(false);
+//       return;
+//     }
+
+//     const actionTaken = `Customer Service Request: ${formData.subject} - ${formData.message} | Contact: ${formData.name} (${formData.email}, ${formData.phone}) | Category: ${formData.category} | Priority: ${formData.priority}`;
+
+//     // Prepare request data according to API schema
+//     const requestData = {
+//       action_taken: actionTaken,
+//       user: currentUserId, // Must be valid UUID from database
+//       handled_by: null // API allows null for this field
+//     };
+
+//     console.log('Sending request data:', requestData); // Debug log
+
+//     const response = await fetch('http://127.0.0.1:8000/api/service-logs/', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         ...(token && { 'Authorization': `Bearer ${token}` }),
+//       },
+//       body: JSON.stringify(requestData)
+//     });
+
+//     // Better error handling
+//     if (!response.ok) {
+//       const errorData = await response.json();
+//       console.error('API Error Response:', errorData);
+      
+//       // Specific error messages
+//       let errorMessage = "Failed to submit request. Please try again.";
+      
+//       if (response.status === 400) {
+//         if (errorData.user) {
+//           errorMessage = "Invalid user ID. Please login again.";
+//         } else if (errorData.action_taken) {
+//           errorMessage = "Invalid request data format.";
+//         } else {
+//           errorMessage = `Bad Request: ${JSON.stringify(errorData)}`;
+//         }
+//       } else if (response.status === 401) {
+//         errorMessage = "Authentication failed. Please login again.";
+//       } else if (response.status === 403) {
+//         errorMessage = "Permission denied. Please check your account status.";
+//       }
+
+//       toast({
+//         title: "Error",
+//         description: errorMessage,
+//         variant: "destructive"
+//       });
+//       return;
+//     }
+
+//     const result = await response.json();
+//     console.log('Service log created successfully:', result);
+    
+//     toast({
+//       title: "Request Submitted Successfully",
+//       description: "Our team will contact you within 24 hours.",
+//     });
+    
+//     // Reset form
+//     setFormData({
+//       name: '',
+//       email: '',
+//       phone: '',
+//       category: 'search',
+//       subject: '',
+//       message: '',
+//       priority: 'medium'
+//     });
+
+//   } catch (error) {
+//     console.error('Network error:', error);
+//     toast({
+//       title: "Network Error",
+//       description: "Please check your internet connection and try again.",
+//       variant: "destructive"
+//     });
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+// const handleSubmit = async (e) => {
+//   e.preventDefault();
+
+//   if (!formData.name || !formData.email || !formData.phone || !formData.subject || !formData.message) {
+//     toast({
+//       title: "Required Fields Missing",
+//       description: "Please fill in all required fields.",
+//       variant: "destructive"
+//     });
+//     return;
+//   }
+
+//   setLoading(true);
+
+//   try {
+//     const token = localStorage.getItem("access_token");
+//     const currentUserId = localStorage.getItem("user_id"); // ये UUID होना चाहिए
+
+//     if (!currentUserId) {
+//       toast({
+//         title: "Authentication Required",
+//         description: "Please login to submit a support request.",
+//         variant: "destructive"
+//       });
+//       setLoading(false);
+//       return;
+//     }
+
+//     // Backend schema के हिसाब से payload
+//     const requestData = {
+//       user: currentUserId, // UUID (e.g. "b3c0a1f4-1234-4d98-9c2f-abcdef123456")
+//       full_name: formData.name,
+//       email: formData.email,
+//       phone_number: formData.phone,
+//       category: formData.category,
+//       priority: formData.priority,
+//       subject: formData.subject,
+//       message: formData.message,
+//     };
+
+//     const response = await fetch("http://127.0.0.1:8000/api/support-tickets/", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         ...(token && { Authorization: `Bearer ${token}` }),
+//       },
+//       body: JSON.stringify(requestData),
+//     });
+
+//     if (!response.ok) {
+//       const errorData = await response.json();
+//       console.error("API Error:", errorData);
+
+//       toast({
+//         title: "Error",
+//         description: errorData?.detail || "Failed to submit request. Please try again.",
+//         variant: "destructive"
+//       });
+//       return;
+//     }
+
+//     const result = await response.json();
+//     console.log("Support ticket created:", result);
+
+//     toast({
+//       title: "Request Submitted Successfully",
+//       description: "Our team will contact you within 24 hours.",
+//     });
+
+//     // Reset form
+//     setFormData({
+//       name: "",
+//       email: "",
+//       phone: "",
+//       category: "search",
+//       subject: "",
+//       message: "",
+//       priority: "medium",
+//     });
+
+//   } catch (error) {
+//     console.error("Network error:", error);
+//     toast({
+//       title: "Network Error",
+//       description: "Please check your internet connection and try again.",
+//       variant: "destructive"
+//     });
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+
+// const handleSubmit = async (e) => {
+//   e.preventDefault();
+  
+//   if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+//     toast({
+//       title: "Required Fields Missing",
+//       description: "Please fill in all required fields.",
+//       variant: "destructive"
+//     });
+//     return;
+//   }
+
+//   setLoading(true);
+
+//   try {
+//     const token = localStorage.getItem('access_token');
+//     const currentUserId = localStorage.getItem('user_id');
+    
+//     const actionTaken = `Customer Service Request: ${formData.subject} - ${formData.message} | Contact: ${formData.name} (${formData.email}, ${formData.phone}) | Category: ${formData.category} | Priority: ${formData.priority}`;
+
+//     // Prepare request data - handle both logged-in and guest users
+//     const requestData = {
+//       action_taken: actionTaken,
+//       user: currentUserId || null, // Allow null for guest users
+//       handled_by: null
+//     };
+
+//     console.log('Sending request data:', requestData);
+
+//     const response = await fetch('http://127.0.0.1:8000/api/service-logs/', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         ...(token && { 'Authorization': `Bearer ${token}` }),
+//       },
+//       body: JSON.stringify(requestData)
+//     });
+
+//     if (!response.ok) {
+//       const errorData = await response.json();
+//       console.error('API Error Response:', errorData);
+      
+//       let errorMessage = "Failed to submit request. Please try again.";
+      
+//       if (response.status === 400) {
+//         if (errorData.user) {
+//           errorMessage = "Invalid user data. Please try refreshing the page.";
+//         } else if (errorData.action_taken) {
+//           errorMessage = "Invalid request data format.";
+//         } else {
+//           errorMessage = `Bad Request: ${JSON.stringify(errorData)}`;
+//         }
+//       } else if (response.status === 401) {
+//         errorMessage = "Authentication failed. You can still submit as a guest.";
+//       } else if (response.status === 403) {
+//         errorMessage = "Permission denied. Please check your account status.";
+//       }
+
+//       toast({
+//         title: "Error",
+//         description: errorMessage,
+//         variant: "destructive"
+//       });
+//       return;
+//     }
+
+//     const result = await response.json();
+//     console.log('Service log created successfully:', result);
+    
+//     toast({
+//       title: "Request Submitted Successfully",
+//       description: currentUserId 
+//         ? "Our team will contact you within 24 hours." 
+//         : "Request submitted as guest. Our team will contact you via email within 24 hours.",
+//     });
+    
+//     // Reset form
+//     setFormData({
+//       name: '',
+//       email: '',
+//       phone: '',
+//       category: 'search',
+//       subject: '',
+//       message: '',
+//       priority: 'medium'
+//     });
+
+//   } catch (error) {
+//     console.error('Network error:', error);
+//     toast({
+//       title: "Network Error",
+//       description: "Please check your internet connection and try again.",
+//       variant: "destructive"
+//     });
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+
+// const handleSubmit = async (e) => {
+//   e.preventDefault();
+  
+//   if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+//     toast({
+//       title: "Required Fields Missing",
+//       description: "Please fill in all required fields.",
+//       variant: "destructive"
+//     });
+//     return;
+//   }
+
+//   setLoading(true);
+
+//   try {
+//     const token = localStorage.getItem('access_token');
+//     const currentUserId = localStorage.getItem('user_id');
+    
+//     const actionTaken = `Customer Service Request: ${formData.subject} - ${formData.message} | Contact: ${formData.name} (${formData.email}, ${formData.phone}) | Category: ${formData.category} | Priority: ${formData.priority}`;
+
+//     // Prepare request data - handle both logged-in and guest users
+//     const requestData = {
+//       action_taken: actionTaken,
+//       user: currentUserId || null, // Allow null for guest users
+//       handled_by: null
+//     };
+
+//     console.log('Sending request data:', requestData);
+
+//     const response = await fetch('http://127.0.0.1:8000/api/service-logs/', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         ...(token && { 'Authorization': `Bearer ${token}` }),
+//       },
+//       body: JSON.stringify(requestData)
+//     });
+
+//     if (!response.ok) {
+//       const errorData = await response.json();
+//       console.error('API Error Response:', errorData);
+      
+//       let errorMessage = "Failed to submit request. Please try again.";
+      
+//       if (response.status === 400) {
+//         if (errorData.user) {
+//           errorMessage = "Invalid user data. Please try refreshing the page.";
+//         } else if (errorData.action_taken) {
+//           errorMessage = "Invalid request data format.";
+//         } else {
+//           errorMessage = `Bad Request: ${JSON.stringify(errorData)}`;
+//         }
+//       } else if (response.status === 401) {
+//         errorMessage = "Authentication failed. You can still submit as a guest.";
+//       } else if (response.status === 403) {
+//         errorMessage = "Permission denied. Please check your account status.";
+//       }
+
+//       toast({
+//         title: "Error",
+//         description: errorMessage,
+//         variant: "destructive"
+//       });
+//       return;
+//     }
+
+//     const result = await response.json();
+//     console.log('Service log created successfully:', result);
+    
+//     toast({
+//       title: "Request Submitted Successfully",
+//       description: "Our team will contact you within 24 hours.",
+//     });
+    
+//     // Reset form
+//     setFormData({
+//       name: '',
+//       email: '',
+//       phone: '',
+//       category: 'search',
+//       subject: '',
+//       message: '',
+//       priority: 'medium'
+//     });
+
+//   } catch (error) {
+//     console.error('Network error:', error);
+//     toast({
+//       title: "Network Error",
+//       description: "Please check your internet connection and try again.",
+//       variant: "destructive"
+//     });
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+
+
+
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+    toast({
+      title: "Required Fields Missing",
+      description: "Please fill in all required fields.",
+      variant: "destructive"
+    });
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const token = localStorage.getItem('access_token');
+    let currentUser = null;
+    
+    // Get user from localStorage
+    const userString = localStorage.getItem('user');
+    if (userString) {
+      try {
+        const userObj = JSON.parse(userString);
+        currentUser = userObj.id || userObj.pk || null;
+        console.log("User ID extracted:", currentUser);
+      } catch (parseError) {
+        console.error("Error parsing user object:", parseError);
+        currentUser = null;
+      }
+    }
+
+    // Map form categories to SupportTicket model categories
+    const categoryMapping = {
+      'search': 'property_search',
+      'docs': 'documentation',
+      'tech': 'technical_issues',
+      'account': 'account_support',
+      'other': 'other'
+    };
+
+    // Prepare SupportTicket data
+    const requestData = {
+      full_name: formData.name,
+      email: formData.email,
+      phone_number: formData.phone || '',
+      category: categoryMapping[formData.category] || 'other',
+      subject: formData.subject,
+      message: formData.message,
+      priority: formData.priority,
+      user: currentUser // null=True, blank=True in SupportTicket model
+    };
+
+    console.log('Sending support ticket data:', requestData);
+
+    const response = await fetch('http://127.0.0.1:8000/api/support-tickets/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify(requestData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('API Error Response:', errorData);
+      
+      let errorMessage = "Failed to submit support ticket. Please try again.";
+      
+      if (response.status === 400) {
+        // Handle validation errors
+        if (errorData.email && errorData.email.includes('valid email')) {
+          errorMessage = "Please enter a valid email address.";
+        } else if (errorData.category) {
+          errorMessage = "Please select a valid category.";
+        } else if (errorData.priority) {
+          errorMessage = "Please select a valid priority level.";
+        } else {
+          errorMessage = `Validation Error: ${Object.keys(errorData).map(key => `${key}: ${errorData[key]}`).join(', ')}`;
+        }
+      } else if (response.status === 401) {
+        errorMessage = "Authentication failed. You can still submit as a guest.";
+      } else if (response.status === 403) {
+        errorMessage = "Permission denied. Please check your account status.";
+      }
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const result = await response.json();
+    console.log('Support ticket created successfully:', result);
+    
+    toast({
+      title: "Support Ticket Submitted Successfully",
+      description: currentUser 
+        ? `Ticket ID: ${result.id.slice(0, 8)}... Our team will contact you within 24 hours.`
+        : "Support ticket submitted as guest. Our team will contact you via email within 24 hours.",
+    });
+    
+    // Reset form
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      category: 'search',
+      subject: '',
+      message: '',
+      priority: 'medium'
+    });
+
+  } catch (error) {
+    console.error('Network error:', error);
+    toast({
+      title: "Network Error",
+      description: "Please check your internet connection and try again.",
+      variant: "destructive"
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+
+
+
+
+
+
+
   const supportChannels = [
     {
       icon: Phone,
@@ -240,62 +794,123 @@ const CustomerService = () => {
                     <CardTitle>Submit a Support Request</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input id="name" placeholder="Enter your full name" />
+                    <form onSubmit={handleSubmit}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Full Name *</Label>
+                          <Input 
+                            id="name" 
+                            placeholder="Enter your full name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email Address *</Label>
+                          <Input 
+                            id="email" 
+                            type="email" 
+                            placeholder="Enter your email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            required
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" placeholder="Enter your email" />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Phone Number</Label>
+                          <Input 
+                            id="phone" 
+                            placeholder="Enter your phone number"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Support Category</Label>
+                          <select 
+                            className="w-full px-3 py-2 border border-input rounded-md"
+                            value={formData.category}
+                            onChange={(e) => setFormData({...formData, category: e.target.value})}
+                          >
+                            <option value="search">Property Search</option>
+                            <option value="docs">Documentation</option>
+                            <option value="tech">Technical Issues</option>
+                            <option value="account">Account Support</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input id="phone" placeholder="Enter your phone number" />
+                      <div className="space-y-2 mb-4">
+                        <Label htmlFor="subject">Subject *</Label>
+                        <Input 
+                          id="subject" 
+                          placeholder="Brief description of your issue"
+                          value={formData.subject}
+                          onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                          required
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Support Category</Label>
-                      <select className="w-full px-3 py-2 border border-input rounded-md">
-                        <option value="search">Property Search</option>
-                        <option value="docs">Documentation</option>
-                        <option value="tech">Technical Issues</option>
-                        <option value="account">Account Support</option>
-                        <option value="other">Other</option>
-                      </select>
+
+                      <div className="space-y-2 mb-4">
+                        <Label htmlFor="message">Message *</Label>
+                        <Textarea 
+                          id="message" 
+                          placeholder="Describe your issue in detail"
+                          className="min-h-[120px]"
+                          value={formData.message}
+                          onChange={(e) => setFormData({...formData, message: e.target.value})}
+                          required
+                        />
                       </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="subject">Subject</Label>
-                      <Input id="subject" placeholder="Brief description of your issue" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Message</Label>
-                      <Textarea 
-                        id="message" 
-                        placeholder="Describe your issue in detail"
-                        className="min-h-[120px]"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Priority Level</Label>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">Low</Button>
-                        <Button variant="outline" size="sm">Medium</Button>
-                        <Button variant="default" size="sm">High</Button>
-                        <Button variant="destructive" size="sm">Urgent</Button>
+                      <div className="space-y-2 mb-6">
+                        <Label>Priority Level</Label>
+                        <div className="flex gap-2">
+                          <Button 
+                            type="button"
+                            variant={formData.priority === 'low' ? 'default' : 'outline'} 
+                            size="sm"
+                            onClick={() => setFormData({...formData, priority: 'low'})}
+                          >
+                            Low
+                          </Button>
+                          <Button 
+                            type="button"
+                            variant={formData.priority === 'medium' ? 'default' : 'outline'} 
+                            size="sm"
+                            onClick={() => setFormData({...formData, priority: 'medium'})}
+                          >
+                            Medium
+                          </Button>
+                          <Button 
+                            type="button"
+                            variant={formData.priority === 'high' ? 'default' : 'outline'} 
+                            size="sm"
+                            onClick={() => setFormData({...formData, priority: 'high'})}
+                          >
+                            High
+                          </Button>
+                          <Button 
+                            type="button"
+                            variant={formData.priority === 'urgent' ? 'destructive' : 'outline'} 
+                            size="sm"
+                            onClick={() => setFormData({...formData, priority: 'urgent'})}
+                          >
+                            Urgent
+                          </Button>
+                        </div>
                       </div>
-                    </div>
 
-                    <Button className="w-full">
-                      <Mail className="w-4 h-4 mr-2" />
-                      Submit Request
-                    </Button>
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        <Mail className="w-4 h-4 mr-2" />
+                        {loading ? 'Submitting...' : 'Submit Request'}
+                      </Button>
+                    </form>
                   </CardContent>
                 </Card>
               </div>

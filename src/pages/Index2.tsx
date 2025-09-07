@@ -234,9 +234,87 @@ export const Index2 = () => {
   const [propertyType, setPropertyType] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [properties, setProperties] = useState<any[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  // Filter properties based on FilterSidebar selections
+  const handleFilterChange = (filters: any) => {
+    let filtered = [...properties];
+
+    // Filter by search query
+    if (filters.searchQuery) {
+      filtered = filtered.filter(property => 
+        property.title?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+        property.location?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+        property.address?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+        property.description?.toLowerCase().includes(filters.searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by property type
+    if (filters.propertyTypes.length > 0) {
+      filtered = filtered.filter(property => {
+        const propertyTitle = property.title?.toLowerCase() || '';
+        const propertyDescription = property.description?.toLowerCase() || '';
+        
+        return filters.propertyTypes.some(type => 
+          propertyTitle.includes(type.toLowerCase()) ||
+          propertyDescription.includes(type.toLowerCase()) ||
+          (type.toLowerCase() === 'apartment' && (propertyTitle.includes('apartment') || propertyTitle.includes('flat'))) ||
+          (type.toLowerCase() === 'villa' && propertyTitle.includes('villa')) ||
+          (type.toLowerCase() === 'house' && propertyTitle.includes('house')) ||
+          (type.toLowerCase() === 'commercial' && propertyTitle.includes('commercial'))
+        );
+      });
+    }
+
+    // Filter by location
+    if (filters.locations.length > 0) {
+      filtered = filtered.filter(property => {
+        const propertyLocation = property.location || property.address || '';
+        return filters.locations.some(location => 
+          propertyLocation.toLowerCase().includes(location.toLowerCase()) ||
+          property.title?.toLowerCase().includes(location.toLowerCase())
+        );
+      });
+    }
+
+    // Filter by BHK
+    if (filters.bhkOptions.length > 0) {
+      filtered = filtered.filter(property => 
+        filters.bhkOptions.some(bhk => 
+          property.bedrooms?.toString() === bhk.replace(/[^0-9]/g, '') ||
+          property.bhkOptions?.some(option => option.bhk?.includes(bhk))
+        )
+      );
+    }
+
+    // Filter by price range (convert lakhs to actual price)
+    const minPrice = filters.priceRange[0] * 100000;
+    const maxPrice = filters.priceRange[1] * 100000;
+    
+    filtered = filtered.filter(property => {
+      const price = parseFloat(property.price) || 0;
+      return price >= minPrice && price <= maxPrice;
+    });
+
+    // Filter by amenities
+    if (filters.amenities.length > 0) {
+      filtered = filtered.filter(property => 
+        filters.amenities.some(amenity => 
+          (property.amenities || []).some(propAmenity => 
+            typeof propAmenity === 'string' 
+              ? propAmenity.includes(amenity)
+              : (propAmenity.amenity || propAmenity.name || '').includes(amenity)
+          )
+        )
+      );
+    }
+
+    setFilteredProperties(filtered);
+  };
 
   // Fetch property types on component mount
   useEffect(() => {
@@ -432,13 +510,16 @@ const fetchProperties = async (search = "", type = "") => {
       const propertiesArray = Array.isArray(data) ? data : data.results || [];
       console.log("📊 Properties received:", propertiesArray.length);
       setProperties(propertiesArray);
+      setFilteredProperties(propertiesArray); // Initialize filtered properties
     } else {
       console.error("❌ API Error:", response.status);
       setProperties([]);
+      setFilteredProperties([]);
     }
   } catch (error) {
     console.error("Error:", error);
     setProperties([]);
+    setFilteredProperties([]);
   } finally {
     setLoading(false);
   }
@@ -720,7 +801,9 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
             
             return {
               ...property,
-              amenities: amenitiesArray.map(amenity => amenity.amenity || amenity)
+              amenities: [...new Set(amenitiesArray.map(amenity => 
+                typeof amenity === 'string' ? amenity : amenity.amenity || amenity.name || 'Unknown'
+              ))]
             };
           } catch (error) {
             console.error(`Failed to fetch amenities for property ${property.id}:`, error);
@@ -733,6 +816,7 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
       );
       
       setProperties(propertiesWithAmenities);
+      setFilteredProperties(propertiesWithAmenities); // Initialize filtered properties
       console.log("Properties with amenities:", propertiesWithAmenities);
       if (propertiesWithAmenities.length > 0) {
         console.log("First property amenities:", propertiesWithAmenities[0].amenities);
@@ -760,7 +844,7 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
     });
     response = await response.json();
     setgetaminitie(Array.isArray(response) ? response : []);
-    console.log("aminities:",response);
+    // console.log("aminities:",response);
   };
 
 
@@ -896,7 +980,10 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
                   <div className="px-6">
-                    <FilterSidebar />
+                    <FilterSidebar 
+                      onFilterChange={handleFilterChange}
+                      properties={properties}
+                    />
                   </div>
                 </SheetContent>
               </Sheet>
@@ -908,7 +995,10 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
           <div className="flex gap-6">
             {/* Desktop Sidebar */}
             <aside className="hidden md:block w-80 flex-shrink-0">
-              <FilterSidebar />
+              <FilterSidebar 
+                onFilterChange={handleFilterChange}
+                properties={properties}
+              />
             </aside>
 
             {/* Main Content */}
@@ -921,7 +1011,7 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                     <p className="text-muted-foreground">
                       {loading
                         ? "Loading..."
-                        : `${properties.length} properties found`}
+                        : `${filteredProperties.length > 0 ? filteredProperties.length : properties.length} properties found`}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
@@ -986,8 +1076,8 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {properties.length > 0 ? (
-                      properties.map((property) => (
+                    {(filteredProperties.length > 0 ? filteredProperties : properties).length > 0 ? (
+                      (filteredProperties.length > 0 ? filteredProperties : properties).map((property) => (
                         <PropertyCard
                           key={property.id}
                           id={property.id.toString()}
@@ -1019,6 +1109,7 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                           onClick={() => {
                             setSearchTerm("");
                             setPropertyType("");
+                            setFilteredProperties([]);
                             fetchProperties();
                           }}
                           className="mt-4"

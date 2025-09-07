@@ -9,6 +9,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 interface FilterSidebarProps {
   className?: string;
+  onFilterChange?: (filters: FilterState) => void;
+  onApiFilter?: (filters: FilterState) => void; // New prop for API filtering
+  properties?: any[];
+}
+
+interface FilterState {
+  locations: string[];
+  propertyTypes: string[];
+  bhkOptions: string[];
+  priceRange: [number, number];
+  possessionStatus: string[];
+  amenities: string[];
+  searchQuery: string;
 }
 
 const locations = ["Mumbai", "Delhi", "Bangalore", "Gurgaon", "Pune", "Hyderabad"];
@@ -30,7 +43,7 @@ const smartSuggestions = [
   "Luxury villas with swimming pools"
 ];
 
-export function FilterSidebar({ className }: FilterSidebarProps) {
+export function FilterSidebar({ className, onFilterChange, onApiFilter, properties = [] }: FilterSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -39,11 +52,108 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
   const [selectedPossession, setSelectedPossession] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
-  const toggleSelection = (value: string, selected: string[], setter: (values: string[]) => void) => {
-    if (selected.includes(value)) {
-      setter(selected.filter(item => item !== value));
-    } else {
-      setter([...selected, value]);
+  // Extract unique values from properties data
+  const uniqueLocations = [...new Set(properties.map(p => p.location || p.address).filter(Boolean))];
+  const uniqueAmenities = [...new Set(
+    properties.flatMap(p => 
+      (p.amenities || []).map(amenity => 
+        typeof amenity === 'string' ? amenity : amenity.amenity || amenity.name || 'Unknown'
+      )
+    ).filter(Boolean)
+  )];
+
+  // Use fallback locations if no unique locations found
+  const displayLocations = uniqueLocations.length > 0 ? uniqueLocations : locations;
+  const displayAmenities = uniqueAmenities.length > 0 ? uniqueAmenities : amenities;
+
+  const toggleSelection = (value: string, selected: string[], setter: (values: string[]) => void, filterType: string) => {
+    const newSelection = selected.includes(value) 
+      ? selected.filter(item => item !== value)
+      : [...selected, value];
+    setter(newSelection);
+    
+    // Trigger filter change
+    if (onFilterChange) {
+      onFilterChange({
+        locations: filterType === 'location' ? newSelection : selectedLocations,
+        propertyTypes: filterType === 'type' ? newSelection : selectedTypes,
+        bhkOptions: filterType === 'bhk' ? newSelection : selectedBHK,
+        priceRange,
+        possessionStatus: filterType === 'possession' ? newSelection : selectedPossession,
+        amenities: filterType === 'amenity' ? newSelection : selectedAmenities,
+        searchQuery
+      });
+    }
+  };
+
+  const handlePriceChange = (newRange: number[]) => {
+    setPriceRange(newRange);
+    if (onFilterChange) {
+      onFilterChange({
+        locations: selectedLocations,
+        propertyTypes: selectedTypes,
+        bhkOptions: selectedBHK,
+        priceRange: [newRange[0], newRange[1]],
+        possessionStatus: selectedPossession,
+        amenities: selectedAmenities,
+        searchQuery
+      });
+    }
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    if (onFilterChange) {
+      onFilterChange({
+        locations: selectedLocations,
+        propertyTypes: selectedTypes,
+        bhkOptions: selectedBHK,
+        priceRange,
+        possessionStatus: selectedPossession,
+        amenities: selectedAmenities,
+        searchQuery: query
+      });
+    }
+  };
+
+  const applyFilters = () => {
+    const filterData = {
+      locations: selectedLocations,
+      propertyTypes: selectedTypes,
+      bhkOptions: selectedBHK,
+      priceRange,
+      possessionStatus: selectedPossession,
+      amenities: selectedAmenities,
+      searchQuery
+    };
+
+    // Use API filtering if available, otherwise client-side filtering
+    if (onApiFilter) {
+      onApiFilter(filterData);
+    } else if (onFilterChange) {
+      onFilterChange(filterData);
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setSelectedLocations([]);
+    setSelectedTypes([]);
+    setSelectedBHK([]);
+    setPriceRange([10, 1000]);
+    setSelectedPossession([]);
+    setSelectedAmenities([]);
+    
+    if (onFilterChange) {
+      onFilterChange({
+        locations: [],
+        propertyTypes: [],
+        bhkOptions: [],
+        priceRange: [10, 1000],
+        possessionStatus: [],
+        amenities: [],
+        searchQuery: ""
+      });
     }
   };
 
@@ -61,7 +171,7 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
           <Input
             placeholder="Ask AI to find your property..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10 bg-background/50 backdrop-blur-sm border-border/50"
           />
           <Sparkles className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary w-4 h-4" />
@@ -93,7 +203,7 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
           Location
         </Label>
         <div className="flex flex-wrap gap-2">
-          {locations.map((location) => (
+          {displayLocations.map((location) => (
             <Badge
               key={location}
               variant={selectedLocations.includes(location) ? "default" : "outline"}
@@ -102,7 +212,7 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
                   ? "bg-gradient-primary text-white hover:opacity-90"
                   : "hover:bg-primary/10 hover:text-primary hover:border-primary"
               }`}
-              onClick={() => toggleSelection(location, selectedLocations, setSelectedLocations)}
+              onClick={() => toggleSelection(location, selectedLocations, setSelectedLocations, 'location')}
             >
               {location}
             </Badge>
@@ -121,8 +231,8 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
             <div key={type.id} className="flex items-center space-x-2">
               <Checkbox
                 id={type.id}
-                checked={selectedTypes.includes(type.id)}
-                onCheckedChange={() => toggleSelection(type.id, selectedTypes, setSelectedTypes)}
+                checked={selectedTypes.includes(type.label)}
+                onCheckedChange={() => toggleSelection(type.label, selectedTypes, setSelectedTypes, 'type')}
               />
               <Label htmlFor={type.id} className="text-sm">{type.label}</Label>
             </div>
@@ -143,7 +253,7 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
                   ? "bg-gradient-primary text-white"
                   : "hover:bg-primary/10 hover:text-primary hover:border-primary"
               }`}
-              onClick={() => toggleSelection(bhk, selectedBHK, setSelectedBHK)}
+              onClick={() => toggleSelection(bhk, selectedBHK, setSelectedBHK, 'bhk')}
             >
               {bhk}
             </Badge>
@@ -160,7 +270,7 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
         <div className="px-2">
           <Slider
             value={priceRange}
-            onValueChange={setPriceRange}
+            onValueChange={handlePriceChange}
             max={1000}
             min={10}
             step={10}
@@ -189,7 +299,7 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
                   ? "bg-gradient-primary text-white"
                   : "hover:bg-primary/10 hover:text-primary hover:border-primary"
               }`}
-              onClick={() => toggleSelection(status, selectedPossession, setSelectedPossession)}
+              onClick={() => toggleSelection(status, selectedPossession, setSelectedPossession, 'possession')}
             >
               {status}
             </Badge>
@@ -201,7 +311,7 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
       <div className="mb-6">
         <Label className="text-sm font-medium mb-3 block">Amenities</Label>
         <div className="flex flex-wrap gap-2">
-          {amenities.map((amenity) => (
+          {displayAmenities.map((amenity) => (
             <Badge
               key={amenity}
               variant={selectedAmenities.includes(amenity) ? "default" : "outline"}
@@ -210,7 +320,7 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
                   ? "bg-gradient-primary text-white"
                   : "hover:bg-primary/10 hover:text-primary hover:border-primary"
               }`}
-              onClick={() => toggleSelection(amenity, selectedAmenities, setSelectedAmenities)}
+              onClick={() => toggleSelection(amenity, selectedAmenities, setSelectedAmenities, 'amenity')}
             >
               {amenity}
             </Badge>
@@ -228,10 +338,22 @@ export function FilterSidebar({ className }: FilterSidebarProps) {
       </div>
 
       {/* Apply Filters Button */}
-      <Button className="w-full bg-gradient-primary hover:opacity-90 text-white font-medium shadow-glow">
-        <Sparkles className="w-4 h-4 mr-2" />
-        Apply Filters
-      </Button>
+      <div className="space-y-3">
+        <Button 
+          className="w-full bg-gradient-primary hover:opacity-90 text-white font-medium shadow-glow"
+          onClick={applyFilters}
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Apply Filters
+        </Button>
+        <Button 
+          variant="outline" 
+          className="w-full" 
+          onClick={clearAllFilters}
+        >
+          Clear All Filters
+        </Button>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,16 +6,119 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/hooks/use-toast";
 import { Info, FileText, Phone, Mail, Clock, CheckCircle } from "lucide-react";
 
 const RequestInfo = () => {
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+    phone_number: '',
+    city: '',
+    property_type: '',
+    budget_range: '',
+    preferred_location: '',
+    specific_requirements: '',
+    info_types: [],
+    communication_method: 'email',
+    timeline: '',
+    consent: false
+  });
+
+  const [selectedInfoTypes, setSelectedInfoTypes] = useState([]);
+  const [selectedCommunicationMethods, setSelectedCommunicationMethods] = useState([]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.full_name || !formData.email || !formData.consent) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please fill in all required fields and agree to terms.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const submitData = {
+        ...formData,
+        info_types: selectedInfoTypes,
+        communication_method: selectedCommunicationMethods[0] || 'email'
+      };
+
+      console.log('Sending inquiry data:', submitData);
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('http://localhost:8000/api/request-info/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(submitData)
+      });
+
+      const result = await response.json();
+      console.log('API Response:', result);
+
+      if (response.ok) {
+        toast({
+          title: "Information Request Submitted",
+          description: "We'll get back to you with detailed information soon.",
+        });
+        
+        // Reset form
+        setFormData({
+          full_name: '',
+          email: '',
+          phone_number: '',
+          city: '',
+          property_type: '',
+          budget_range: '',
+          preferred_location: '',
+          specific_requirements: '',
+          info_types: [],
+          communication_method: 'email',
+          timeline: '',
+          consent: false
+        });
+        setSelectedInfoTypes([]);
+        setSelectedCommunicationMethods([]);
+      } else {
+        throw new Error(result.message || 'Failed to submit request');
+      }
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit request. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleInfoTypeChange = (typeId, checked) => {
+    if (checked) {
+      setSelectedInfoTypes(prev => [...prev, typeId]);
+    } else {
+      setSelectedInfoTypes(prev => prev.filter(id => id !== typeId));
+    }
+  };
+
+  const handleCommunicationMethodChange = (methodId, checked) => {
+    if (checked) {
+      setSelectedCommunicationMethods(prev => [...prev, methodId]);
+    } else {
+      setSelectedCommunicationMethods(prev => prev.filter(id => id !== methodId));
+    }
+  };
   const infoTypes = [
-    { id: "property-details", label: "Property Details & Pricing", icon: Info },
-    { id: "market-analysis", label: "Market Analysis Report", icon: FileText },
-    { id: "investment-guide", label: "Investment Opportunities", icon: CheckCircle },
-    { id: "loan-assistance", label: "Loan & Finance Assistance", icon: FileText },
-    { id: "legal-guidance", label: "Legal Documentation Help", icon: FileText },
-    { id: "site-visit", label: "Site Visit Arrangement", icon: CheckCircle },
+    { id: "property_details", label: "Property Details & Pricing", icon: Info },
+    { id: "market_analysis", label: "Market Analysis Report", icon: FileText },
+    { id: "investment_opportunities", label: "Investment Opportunities", icon: CheckCircle },
+    { id: "loan_finance", label: "Loan & Finance Assistance", icon: FileText },
+    { id: "legal_help", label: "Legal Documentation Help", icon: FileText },
+    { id: "site_visit", label: "Site Visit Arrangement", icon: CheckCircle },
   ];
 
   const propertyTypes = [
@@ -73,7 +177,11 @@ const RequestInfo = () => {
                     <div className="grid md:grid-cols-2 gap-3">
                       {infoTypes.map((type) => (
                         <div key={type.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                          <Checkbox id={type.id} />
+                          <Checkbox 
+                            id={type.id} 
+                            checked={selectedInfoTypes.includes(type.id)}
+                            onCheckedChange={(checked) => handleInfoTypeChange(type.id, checked)}
+                          />
                           <type.icon className="h-4 w-4 text-primary" />
                           <label htmlFor={type.id} className="text-sm cursor-pointer flex-1">
                             {type.label}
@@ -87,22 +195,43 @@ const RequestInfo = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">Full Name *</label>
-                      <Input placeholder="Enter your full name" required />
+                      <Input 
+                        placeholder="Enter your full name" 
+                        value={formData.full_name}
+                        onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                        required 
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">Email *</label>
-                      <Input type="email" placeholder="your@email.com" required />
+                      <Input 
+                        type="email" 
+                        placeholder="your@email.com" 
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        required 
+                      />
                     </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">Phone Number *</label>
-                      <Input type="tel" placeholder="+91 98765 43210" required />
+                      <Input 
+                        type="tel" 
+                        placeholder="+91 98765 43210" 
+                        value={formData.phone_number}
+                        onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                        required 
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">City</label>
-                      <Input placeholder="Your city" />
+                      <Input 
+                        placeholder="Your city" 
+                        value={formData.city}
+                        onChange={(e) => setFormData({...formData, city: e.target.value})}
+                      />
                     </div>
                   </div>
 
@@ -110,31 +239,30 @@ const RequestInfo = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">Property Type</label>
-                      <Select>
+                      <Select value={formData.property_type} onValueChange={(value) => setFormData({...formData, property_type: value})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select property type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {propertyTypes.map((type) => (
-                            <SelectItem key={type} value={type.toLowerCase().replace(/\s+/g, '-')}>
-                              {type}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="apartment">Apartment</SelectItem>
+                          <SelectItem value="villa">Villa</SelectItem>
+                          <SelectItem value="plot">Plot</SelectItem>
+                          <SelectItem value="commercial">Commercial</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">Budget Range</label>
-                      <Select>
+                      <Select value={formData.budget_range} onValueChange={(value) => setFormData({...formData, budget_range: value})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select budget range" />
                         </SelectTrigger>
                         <SelectContent>
-                          {budgetRanges.map((range) => (
-                            <SelectItem key={range} value={range.toLowerCase().replace(/\s+/g, '-')}>
-                              {range}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="0-20L">0 - 20 Lakhs</SelectItem>
+                          <SelectItem value="20L-50L">20 Lakhs - 50 Lakhs</SelectItem>
+                          <SelectItem value="50L-1Cr">50 Lakhs - 1 Crore</SelectItem>
+                          <SelectItem value="1Cr+">Above 1 Crore</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -142,7 +270,11 @@ const RequestInfo = () => {
 
                   <div>
                     <label className="text-sm font-medium mb-2 block">Preferred Location</label>
-                    <Input placeholder="Enter preferred areas/localities" />
+                    <Input 
+                      placeholder="Enter preferred areas/localities" 
+                      value={formData.preferred_location}
+                      onChange={(e) => setFormData({...formData, preferred_location: e.target.value})}
+                    />
                   </div>
 
                   {/* Specific Requirements */}
@@ -151,6 +283,8 @@ const RequestInfo = () => {
                     <Textarea 
                       placeholder="Please describe what specific information you're looking for, any particular requirements, timeline, or questions you have..."
                       rows={5}
+                      value={formData.specific_requirements}
+                      onChange={(e) => setFormData({...formData, specific_requirements: e.target.value})}
                     />
                   </div>
 
@@ -164,7 +298,11 @@ const RequestInfo = () => {
                         { id: "whatsapp", label: "WhatsApp", icon: Phone },
                       ].map((method) => (
                         <div key={method.id} className="flex items-center space-x-2 p-3 border rounded-lg">
-                          <Checkbox id={method.id} />
+                          <Checkbox 
+                            id={method.id} 
+                            checked={selectedCommunicationMethods.includes(method.id)}
+                            onCheckedChange={(checked) => handleCommunicationMethodChange(method.id, checked)}
+                          />
                           <method.icon className="h-4 w-4 text-primary" />
                           <label htmlFor={method.id} className="text-sm cursor-pointer">
                             {method.label}
@@ -177,30 +315,33 @@ const RequestInfo = () => {
                   {/* Timeline */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">When are you looking to buy/invest?</label>
-                    <Select>
+                    <Select value={formData.timeline} onValueChange={(value) => setFormData({...formData, timeline: value})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select timeline" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="immediately">Immediately</SelectItem>
-                        <SelectItem value="within-1-month">Within 1 month</SelectItem>
-                        <SelectItem value="1-3-months">1-3 months</SelectItem>
-                        <SelectItem value="3-6-months">3-6 months</SelectItem>
-                        <SelectItem value="6-12-months">6-12 months</SelectItem>
-                        <SelectItem value="just-exploring">Just exploring</SelectItem>
+                        <SelectItem value="immediate">Immediately</SelectItem>
+                        <SelectItem value="1-3m">1-3 months</SelectItem>
+                        <SelectItem value="3-6m">3-6 months</SelectItem>
+                        <SelectItem value="6m+">6+ months</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   {/* Terms Agreement */}
                   <div className="flex items-start space-x-2">
-                    <Checkbox id="terms" className="mt-1" />
+                    <Checkbox 
+                      id="terms" 
+                      className="mt-1" 
+                      checked={formData.consent}
+                      onCheckedChange={(checked) => setFormData({...formData, consent: checked})}
+                    />
                     <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
                       I agree to receive information via email, phone, or WhatsApp and consent to being contacted by RealEstate Pro regarding my inquiry.
                     </label>
                   </div>
 
-                  <Button className="w-full" size="lg">
+                  <Button className="w-full" size="lg" onClick={handleSubmit}>
                     Submit Information Request
                   </Button>
                 </CardContent>
