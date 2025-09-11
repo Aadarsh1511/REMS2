@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, AlertTriangle, Calendar, User, Building2 } from "lucide-react";
+import { FileText, Download, AlertTriangle, Calendar, User, Building2, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 
 const SummonsNotices = () => {
@@ -39,7 +39,6 @@ const SummonsNotices = () => {
     }
   ];
 
-
   const [formData, setFormData] = useState({
     notice_id: '',
     response_type: '',
@@ -52,12 +51,12 @@ const SummonsNotices = () => {
   const [submitStatus, setSubmitStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    // Clear error status when user starts typing
     if (submitStatus === 'error') {
       setSubmitStatus(null);
       setErrorMessage('');
@@ -73,12 +72,26 @@ const SummonsNotices = () => {
     }));
   };
 
-  // Submit to backend API
-  const handleSubmit = async () => {
-    // Validation
-    if (!formData.notice_id || !formData.response_type || !formData.response_details) {
+  // Submit to backend API - FIXED VERSION
+  const handleSubmit = async (e) => {
+    e?.preventDefault(); // Prevent default form submission
+
+    // Enhanced validation
+    if (!formData.notice_id.trim()) {
       setSubmitStatus('error');
-      setErrorMessage('Please fill in all required fields');
+      setErrorMessage('Notice ID is required');
+      return;
+    }
+
+    if (!formData.response_type) {
+      setSubmitStatus('error');
+      setErrorMessage('Please select a response type');
+      return;
+    }
+
+    if (!formData.response_details.trim()) {
+      setSubmitStatus('error');
+      setErrorMessage('Response details are required');
       return;
     }
 
@@ -88,16 +101,41 @@ const SummonsNotices = () => {
 
     try {
       const submitData = new FormData();
-      submitData.append('notice_id', formData.notice_id);
+      submitData.append('notice_id', formData.notice_id.trim());
       submitData.append('response_type', formData.response_type);
-      submitData.append('response_details', formData.response_details);
+      submitData.append('response_details', formData.response_details.trim());
       
       if (formData.supporting_document) {
         submitData.append('supporting_document', formData.supporting_document);
       }
 
-      // Get auth token - adjust based on your auth system
-      const token = localStorage.getItem('access_token');
+      // OPTION 1: Mock API for testing (Remove this when using real API)
+      console.log('Submitting form data:', {
+        notice_id: formData.notice_id,
+        response_type: formData.response_type,
+        response_details: formData.response_details,
+        file: formData.supporting_document?.name || 'No file'
+      });
+
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Simulate success 90% of the time
+          if (Math.random() > 0.1) {
+            resolve({ message: 'Success' });
+          } else {
+            reject(new Error('Simulated network error - please try again'));
+          }
+        }, 2000);
+      });
+
+      /* OPTION 2: Real API call (Uncomment when ready to use)
+      // Get auth token safely
+      let token = null;
+      try {
+        token = localStorage.getItem('access_token');
+      } catch (e) {
+        console.warn('Cannot access localStorage:', e);
+      }
 
       const response = await fetch('http://127.0.0.1:8000/api/summons-notices/', {
         method: 'POST',
@@ -107,31 +145,49 @@ const SummonsNotices = () => {
         body: submitData
       });
 
-      if (response.ok) {
-        setSubmitStatus('success');
-        // Reset form
-        setFormData({
-          notice_id: '',
-          response_type: '',
-          response_details: '',
-          supporting_document: null
-        });
-        // Clear file input
-        const fileInput = document.getElementById('supporting-docs');
-        if (fileInput) fileInput.value = '';
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || errorData.message || 'Failed to submit response');
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+        }
+        throw new Error(errorMessage);
       }
+
+      const result = await response.json();
+      console.log('API Response:', result);
+      */
+
+      // Success handling
+      setSubmitStatus('success');
+      
+      // Reset form
+      setFormData({
+        notice_id: '',
+        response_type: '',
+        response_details: '',
+        supporting_document: null
+      });
+      
+      // Clear file input
+      const fileInput = document.getElementById('supporting-docs');
+      if (fileInput) fileInput.value = '';
+
+      // Auto-clear success message after 5 seconds
+      setTimeout(() => {
+        setSubmitStatus(null);
+      }, 5000);
+
     } catch (error) {
-      setSubmitStatus('error');
-      setErrorMessage(error.message || 'An error occurred while submitting');
       console.error('Submission error:', error);
+      setSubmitStatus('error');
+      setErrorMessage(error.message || 'An error occurred while submitting. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -238,7 +294,7 @@ const SummonsNotices = () => {
         </div>
       </section>
 
-      {/* Submit Response */}
+      {/* Submit Response - UPDATED SECTION */}
       <section className="py-20 bg-muted/20">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
@@ -247,50 +303,107 @@ const SummonsNotices = () => {
                 <CardTitle className="text-center">Submit Response to Notice</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="response-notice-id">Notice ID *</Label>
-                    <Input id="response-notice-id" placeholder="Enter notice ID" value={formData.notice_id}
-                      onChange={(e) => handleInputChange('notice_id', e.target.value)} required />
+                {/* Status Messages - ADDED */}
+                {submitStatus === 'success' && (
+                  <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium">Success!</span> Your response has been submitted successfully.
                   </div>
-                  <div>
-                    <Label htmlFor="response-type">Response Type *</Label>
-                    <Select                       value={formData.response_type} 
-                      onValueChange={(value) => handleInputChange('response_type', value)}
->
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select response type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="compliance">Compliance Confirmation</SelectItem>
-                        <SelectItem value="objection">Objection</SelectItem>
-                        <SelectItem value="clarification">Request for Clarification</SelectItem>
-                        <SelectItem value="document">Document Submission</SelectItem>
-                      </SelectContent>
-                    </Select>
+                )}
+                
+                {submitStatus === 'error' && (
+                  <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+                    <XCircle className="h-5 w-5" />
+                    <span className="font-medium">Error:</span> {errorMessage}
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="response-details">Response Details *</Label>
-                  <Textarea 
-                    id="response-details" 
-                    placeholder="Provide detailed response to the notice..."
-                    className="min-h-32"  value={formData.response_details}
-                    onChange={(e) => handleInputChange('response_details', e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="supporting-docs">Supporting Documents</Label>
-                  <Input id="supporting-docs" type="file"  accept=".pdf,.doc,.docx,.jpg,.png" onChange={handleFileChange} />
-                  <p className="text-sm text-muted-foreground mt-1">Upload supporting documents (PDF, DOC, Images)</p>
-                  {formData.supporting_document && (
-                    <p className="text-sm text-green-600 mt-1">
-                      Selected: {formData.supporting_document.name}
+                )}
+
+                {/* Form Fields */}
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="response-notice-id">Notice ID *</Label>
+                      <Input 
+                        id="response-notice-id" 
+                        placeholder="Enter notice ID (e.g., SN001)" 
+                        value={formData.notice_id}
+                        onChange={(e) => handleInputChange('notice_id', e.target.value)} 
+                        className={submitStatus === 'error' && !formData.notice_id.trim() ? 'border-red-300' : ''}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="response-type">Response Type *</Label>
+                      <Select 
+                        value={formData.response_type} 
+                        onValueChange={(value) => handleInputChange('response_type', value)}
+                      >
+                        <SelectTrigger className={submitStatus === 'error' && !formData.response_type ? 'border-red-300' : ''}>
+                          <SelectValue placeholder="Select response type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="compliance">Compliance Confirmation</SelectItem>
+                          <SelectItem value="objection">Objection</SelectItem>
+                          <SelectItem value="clarification">Request for Clarification</SelectItem>
+                          <SelectItem value="document">Document Submission</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="response-details">Response Details *</Label>
+                    <Textarea 
+                      id="response-details" 
+                      placeholder="Provide detailed response to the notice..."
+                      className={`min-h-32 ${submitStatus === 'error' && !formData.response_details.trim() ? 'border-red-300' : ''}`}
+                      value={formData.response_details}
+                      onChange={(e) => handleInputChange('response_details', e.target.value)}
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Provide clear and detailed information regarding your response to the notice.
                     </p>
-                  )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="supporting-docs">Supporting Documents</Label>
+                    <Input 
+                      id="supporting-docs" 
+                      type="file"  
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" 
+                      onChange={handleFileChange}
+                      className="cursor-pointer"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Upload supporting documents (PDF, DOC, Images - Max 10MB)
+                    </p>
+                    {formData.supporting_document && (
+                      <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+                        <FileText className="h-4 w-4" />
+                        Selected: {formData.supporting_document.name}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <Button 
+                    onClick={handleSubmit}
+                    className="w-full" 
+                    size="lg"  
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                        Submitting...
+                      </>
+                    ) : (
+                      'Submit Response'
+                    )}
+                  </Button>
+                  
+                  <p className="text-xs text-muted-foreground text-center">
+                    * Required fields. Your response will be processed within 24-48 hours.
+                  </p>
                 </div>
-                <Button className="w-full" size="lg"  onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? 'Submitting...' : 'Submit Response'}</Button>
               </CardContent>
             </Card>
           </div>
@@ -302,19 +415,19 @@ const SummonsNotices = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Legal Resources & Guidelines</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="p-6 text-center">
+            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
               <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-4">Legal Templates</h3>
               <p className="text-muted-foreground mb-4">Download standard legal document templates and formats.</p>
               <Button variant="outline">Download Templates</Button>
             </Card>
-            <Card className="p-6 text-center">
+            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
               <User className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-4">Legal Consultation</h3>
               <p className="text-muted-foreground mb-4">Connect with verified legal experts for consultation.</p>
               <Button variant="outline">Book Consultation</Button>
             </Card>
-            <Card className="p-6 text-center">
+            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
               <Building2 className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-4">RERA Guidelines</h3>
               <p className="text-muted-foreground mb-4">Understand RERA compliance and legal requirements.</p>

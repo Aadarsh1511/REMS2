@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import {
   Card,
@@ -47,18 +47,32 @@ const AddProperty = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [propertyTypes, setPropertyTypes] = useState<any[]>([]);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    propertyType: "",
+    property_type: "",
+    category: "",
+    location: "",
+    latitude: "",
+    longitude: "",
+    area_sqft: "",
     price: "",
-    area: "",
+    price_per_sqft: "",
     bedrooms: "",
     bathrooms: "",
-    address: "",
-    city: "",
-    state: "",
-    pincode: "",
+    balconies: "",
+    furnishing: "",
+    floor_no: "",
+    total_floors: "",
+    availability_status: "",
+    possession_date: "",
+    age_of_property: "",
+    ownership_type: "",
+    rera_approved: false,
+    maintenance_cost: "",
+    property_status: "",
     amenities: [] as string[],
   });
 
@@ -71,27 +85,11 @@ const AddProperty = () => {
     { title: "Review", icon: Eye },
   ];
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   try {
-  //     const response = await axios.post(
-  //       "http://127.0.0.1:8000/api/properties/",
-  //       formData,  // yaha aapka form data jayega
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
+  const amenitiesList = [
+    "Swimming Pool", "Gym", "Parking", "Garden", "Security", "Elevator",
+    "Power Backup", "Water Supply", "Internet", "Balcony", "Terrace", "Maintenance"
+  ];
 
-  //         }
-  //       }
-  //     );
-  //     console.log("Property Added:", response.data);
-  //     alert("Property added successfully!");
-  //     localStorage.setItem("token", response.data.token);
-  //   } catch (error) {
-  //     console.error("Error while adding property:", error);
-  //     alert("Failed to add property");
-  //   }
-  // };
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [uploadedDocuments, setUploadedDocuments] = useState<
     { name: string; file: File }[]
@@ -127,221 +125,156 @@ const AddProperty = () => {
     }
   };
 
-  // const handleSubmit = async (e?: React.FormEvent) => {
-  //   e?.preventDefault();
-
-  //   try {
-  //     const token = localStorage.getItem("access_token");
-
-  //     if (!token) {
-  //       alert("authentication Error");
-  //       return;
-  //     }
-
-  //     if (imageFiles.length === 0) {
-  //       alert("Please upload at least one image");
-  //       return;
-  //     }
-
-  //     const formDataToSend = new FormData();
-  //     formDataToSend.append("title", formData.title);
-  //     formDataToSend.append("description", formData.description);
-  //     formDataToSend.append("price", formData.price);
-  //     formDataToSend.append("bedrooms", formData.bedrooms);
-  //     formDataToSend.append("bathrooms", formData.bathrooms);
-  //     formDataToSend.append("cover_image", imageFiles[0]);
-
-  //     // Fix amenities - send as individual items instead of JSON string
-  //     formData.amenities.forEach((amenity, index) => {
-  //       formDataToSend.append(`amenities[${index}]`, amenity);
-  //     });
-
-  //     const apiResponse = await axios.post(
-  //       "http://127.0.0.1:8000/api/properties/",
-  //       formDataToSend,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     console.log("Property added:", apiResponse.data);
-  //     alert("Property added successfully!");
-
-  //     // Clear form and navigate
-  //     setFormData({
-  //       title: "",
-  //       description: "",
-  //       propertyType: "",
-  //       price: "",
-  //       area: "",
-  //       bedrooms: "",
-  //       bathrooms: "",
-  //       address: "",
-  //       city: "",
-  //       state: "",
-  //       pincode: "",
-  //       amenities: [],
-  //     });
-
-  //     setUploadedImages([]);
-  //     setImageFiles([]);
-  //     navigate("/");
-
-  //   } catch (error: any) {
-  //     console.error("Error:", error.response?.data);
-  //     alert("Failed to add property");
-  //   }
-  // };
-
-const handleSubmit = async (e?: React.FormEvent) => {
-  e?.preventDefault();
-
-  try {
-    const token = localStorage.getItem("access_token");
-
-    if (!token) {
-      toast.error("Authentication Error");
-      return;
-    }
-
-    if (imageFiles.length === 0) {
-      toast.error("Please upload at least one image");
-      return;
-    }
-
-    // Step 1: Create the property first without amenities
-    const formDataToSend = new FormData();
-    formDataToSend.append("title", formData.title);
-    formDataToSend.append("description", formData.description);
-    formDataToSend.append("price", formData.price);
-    formDataToSend.append("bedrooms", formData.bedrooms);
-    formDataToSend.append("bathrooms", formData.bathrooms);
-    formDataToSend.append("cover_image", imageFiles[0]);
-
-    console.log("Creating property with data:", {
-      title: formData.title,
-      description: formData.description,
-      price: formData.price,
-      bedrooms: formData.bedrooms,
-      bathrooms: formData.bathrooms,
-      amenities: formData.amenities
+  const handleAmenityChange = (amenity: string) => {
+    setFormData((prev) => {
+      const newAmenities = prev.amenities.includes(amenity)
+        ? prev.amenities.filter((a) => a !== amenity)
+        : [...prev.amenities, amenity];
+      return { ...prev, amenities: newAmenities };
     });
+  };
 
-    // Create the property
-    const propertyResponse = await axios.post(
-      "http://127.0.0.1:8000/api/properties/",
-      formDataToSend,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+
+    try {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        toast.error("Authentication Error");
+        return;
       }
-    );
 
-    console.log("Property created successfully:", propertyResponse.data);
-    const propertyId = propertyResponse.data.id;
+      if (imageFiles.length === 0) {
+        toast.error("Please upload at least one image");
+        return;
+      }
 
-    // Step 2: Create amenities separately if any are selected
-    if (formData.amenities.length > 0) {
-      console.log("Creating amenities for property:", propertyId);
-      
-      for (const amenity of formData.amenities) {
-        try {
-          const amenityResponse = await axios.post(
-            "http://127.0.0.1:8000/api/property-amenities/",
-            {
-              property: propertyId,
-              amenity: amenity
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          console.log(`Amenity "${amenity}" created:`, amenityResponse.data);
-        } catch (amenityError) {
-          console.error(`Failed to create amenity "${amenity}":`, amenityError);
+      // Calculate price_per_sqft if not provided
+      const pricePerSqft =
+        formData.price_per_sqft ||
+        (formData.price && formData.area_sqft
+          ? Math.round(
+              parseInt(formData.price) / parseInt(formData.area_sqft)
+            ).toString()
+          : "0");
+
+      const formDataToSend = new FormData();
+
+      // Append all form data
+      Object.keys(formData).forEach((key) => {
+        if (key === "amenities") {
+          // Append amenities as a comma-separated string
+          formDataToSend.append(key, formData.amenities.join(','));
+        } else if (key === "rera_approved") {
+          formDataToSend.append(key, formData[key] ? "true" : "false");
+        } else if (key === "price_per_sqft") {
+          // Use calculated value if not provided
+          formDataToSend.append(key, pricePerSqft);
+        } else if (key === "maintenance_cost" && !formData[key]) {
+          // Default maintenance cost if not provided
+          formDataToSend.append(key, "0");
+        } else if (formData[key]) {
+          formDataToSend.append(key, formData[key]);
         }
+      });
+
+      if (imageFiles[0]) {
+        formDataToSend.append("cover_image", imageFiles[0]);
+      }
+
+      // Debug: Log FormData contents
+      console.log("FormData contents:");
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(key, value);
+      }
+
+      const propertyResponse = await axios.post(
+        "http://127.0.0.1:8000/api/properties/",
+        formDataToSend,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Property created successfully:", propertyResponse.data);
+      const propertyId = propertyResponse.data.id;
+
+      // You can handle post-submit logic here (e.g., navigation, toast, etc.)
+      toast.success("Property created successfully!");
+      navigate(`/property/${propertyId}`);
+    } catch (error: any) {
+      console.error("Error creating property:", error);
+      toast.error("Failed to create property. Please try again.");
+    }
+  };
+
+  const fetchPropertyTypes = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        console.error("No authentication token found");
+        toast.error("Please login to continue");
+        // Navigate to login if needed
+        // navigate('/login');
+        return;
+      }
+
+      const response = await axios.get(
+        "http://127.0.0.1:8000/api/property-types/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Property Types Response:", response.data);
+      setPropertyTypes(response.data);
+    } catch (error) {
+      console.error("Failed to fetch property types:", error);
+
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+        localStorage.removeItem("access_token"); // Clear expired token
+        // navigate('/login');
+      } else if (error.response?.status === 403) {
+        toast.error("Access denied. Check permissions.");
+      } else if (error.response?.status >= 500) {
+        toast.error("Server error. Please try again later.");
+      } else {
+        toast.error("Failed to load property types.");
       }
     }
+  };
 
-    toast.success("Property and amenities added successfully!");
+  // Debug localStorage token
+  // console.log("Token in localStorage:", localStorage.getItem("access_token"));
 
-    // Clear form data
-    setFormData({
-      title: "",
-      description: "",
-      propertyType: "",
-      price: "",
-      area: "",
-      bedrooms: "",
-      bathrooms: "",
-      address: "",
-      city: "",
-      state: "",
-      pincode: "",
-      amenities: [],
-    });
+  useEffect(() => {
+    fetchPropertyTypes();
+  }, []);
 
-    // Clear images
-    setUploadedImages([]);
-    setImageFiles([]);
-    
-    // Navigate back to property list
-    navigate("/");
-
-  } catch (error: any) {
-    console.error("Error adding property:", error);
-    if (error.response?.data) {
-      console.error("Backend error details:", error.response.data);
-      toast.error(`Failed to add property: ${JSON.stringify(error.response.data)}`);
-    } else {
-      toast.error("Failed to add property. Please try again.");
-    }
-  }
-};
-
-  // const amenitiesList = [
-  //   "Swimming Pool",
-  //   "Gym",
-  //   "Parking",
-  //   "Garden",
-  //   "Security",
-  //   "Elevator",
-  //   "Power Backup",
-  //   "Water Supply",
-  //   "Internet",
-  //   "Balcony",
-  //   "Terrace",
-  //   "Maintenance",
-  // ];
-
-  // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const files = e.target.files;
-  //   if (files) {
-  //     Array.from(files).forEach(file => {
-  //       const reader = new FileReader();
-  //       reader.onload = (e) => {
-  //         if (e.target?.result) {
-  //           setUploadedImages(prev => [...prev, e.target!.result as string]);
-  //         }
-  //       };
-  //       reader.readAsDataURL(file);
-  //     });
-  //   }
-  // };
+  // Alternative: Hardcoded fallback for testing (temporary)
+  const fallbackPropertyTypes = [
+    { id: 1, name: "Apartment" },
+    { id: 2, name: "Villa" },
+    { id: 3, name: "Plot" },
+    { id: 4, name: "Commercial" },
+  ];
 
   const generateAIDescription = () => {
     const aiDescription = `Beautiful ${
       formData.bedrooms
-    } bedroom ${formData.propertyType.toLowerCase()} 
-    spanning ${formData.area} sq ft in ${
-      formData.city
-    }. This property offers modern amenities and 
+    } bedroom ${formData.property_type.toLowerCase()} 
+    spanning ${
+      formData.area_sqft
+    } sq ft in a prime location. This property offers modern amenities and 
     excellent connectivity. Perfect for families looking for comfort and convenience in a prime location.`;
 
     setFormData((prev) => ({ ...prev, description: aiDescription }));
@@ -349,7 +282,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
 
   const getSuggestedPrice = () => {
     // Mock AI price suggestion based on area and location
-    const basePrice = parseInt(formData.area) * 25000; // ₹25k per sq ft
+    const basePrice = parseInt(formData.area_sqft) * 25000; // ₹25k per sq ft
     return basePrice.toLocaleString();
   };
 
@@ -450,14 +383,15 @@ const handleSubmit = async (e?: React.FormEvent) => {
                         />
                       </div>
 
+                      {/* property type */}
                       <div>
-                        <Label htmlFor="propertyType">Property Type *</Label>
+                        <Label htmlFor="property_type">Property Type *</Label>
                         <Select
-                          value={formData.propertyType}
+                          value={formData.property_type}
                           onValueChange={(value) =>
                             setFormData((prev) => ({
                               ...prev,
-                              propertyType: value,
+                              property_type: value,
                             }))
                           }
                         >
@@ -465,33 +399,45 @@ const handleSubmit = async (e?: React.FormEvent) => {
                             <SelectValue placeholder="Select property type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="apartment">
-                              🏢 Apartment
-                            </SelectItem>
-                            <SelectItem value="villa">🏘️ Villa</SelectItem>
-                            <SelectItem value="house">🏠 House</SelectItem>
-                            <SelectItem value="penthouse">
-                              🏙️ Penthouse
-                            </SelectItem>
-                            <SelectItem value="plot">🌳 Plot/Land</SelectItem>
+                            {propertyTypes.length === 0 ? (
+                              <SelectItem value="loading" disabled>
+                                Loading property types...
+                              </SelectItem>
+                            ) : (
+                              propertyTypes.map((pt) => (
+                                <SelectItem
+                                  key={pt.id}
+                                  value={pt.id.toString()}
+                                >
+                                  {pt.name}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div>
-                        <Label htmlFor="status">Listing Type *</Label>
-                        <Select>
+                        <Label htmlFor="category">Listing Category *</Label>
+                        <Select
+                          value={formData.category}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              category: value,
+                            }))
+                          }
+                        >
                           <SelectTrigger className="mt-2">
-                            <SelectValue placeholder="For Sale or Rent" />
+                            <SelectValue placeholder="For Sale, Rent or Lease" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="sale">💰 For Sale</SelectItem>
-                            <SelectItem value="rent">🏠 For Rent</SelectItem>
-                            <SelectItem value="both">📋 Both</SelectItem>
+                            <SelectItem value="Sale">💰 For Sale</SelectItem>
+                            <SelectItem value="Rent">🏠 For Rent</SelectItem>
+                            <SelectItem value="Lease">📋 Lease</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-
                       <div className="md:col-span-2">
                         <div className="flex items-center justify-between mb-2">
                           <Label htmlFor="description">
@@ -520,6 +466,45 @@ const handleSubmit = async (e?: React.FormEvent) => {
                           className="min-h-32"
                         />
                       </div>
+
+                      <div className="md:col-span-2">
+                        <Label className="text-base font-medium">Amenities</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                          {amenitiesList.map((amenity) => (
+                            <div key={amenity} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={amenity}
+                                checked={formData.amenities.includes(amenity)}
+                                onCheckedChange={() => handleAmenityChange(amenity)}
+                              />
+                              <Label htmlFor={amenity} className="font-normal">
+                                {amenity}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {formData.amenities.length > 0 && (
+                        <div className="md:col-span-2">
+                          <Label className="text-sm font-medium mb-2 block">Selected Amenities:</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {formData.amenities.map((amenity) => (
+                              <Badge key={amenity} variant="secondary" className="px-3 py-1">
+                                {amenity}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0 ml-2 hover:bg-transparent"
+                                  onClick={() => handleAmenityChange(amenity)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -539,16 +524,16 @@ const handleSubmit = async (e?: React.FormEvent) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
-                        <Label htmlFor="area">Total Area (sq ft) *</Label>
+                        <Label htmlFor="area_sqft">Total Area (sq ft) *</Label>
                         <Input
-                          id="area"
+                          id="area_sqft"
                           type="number"
                           placeholder="1200"
-                          value={formData.area}
+                          value={formData.area_sqft}
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              area: e.target.value,
+                              area_sqft: e.target.value,
                             }))
                           }
                           className="mt-2"
@@ -557,123 +542,234 @@ const handleSubmit = async (e?: React.FormEvent) => {
 
                       <div>
                         <Label htmlFor="bedrooms">Bedrooms *</Label>
-                        <Select
+                        <Input
+                          id="bedrooms"
+                          type="number"
+                          placeholder="3"
                           value={formData.bedrooms}
-                          onValueChange={(value) =>
+                          onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              bedrooms: value,
+                              bedrooms: e.target.value,
                             }))
                           }
-                        >
-                          <SelectTrigger className="mt-2">
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 BHK</SelectItem>
-                            <SelectItem value="2">2 BHK</SelectItem>
-                            <SelectItem value="3">3 BHK</SelectItem>
-                            <SelectItem value="4">4 BHK</SelectItem>
-                            <SelectItem value="5+">5+ BHK</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          className="mt-2"
+                        />
                       </div>
 
                       <div>
                         <Label htmlFor="bathrooms">Bathrooms *</Label>
-                        <Select
+                        <Input
+                          id="bathrooms"
+                          type="number"
+                          placeholder="2"
                           value={formData.bathrooms}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              bathrooms: e.target.value,
+                            }))
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="balconies">Balconies *</Label>
+                        <Input
+                          id="balconies"
+                          type="number"
+                          placeholder="1"
+                          value={formData.balconies}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              balconies: e.target.value,
+                            }))
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="floor_no">Floor No. *</Label>
+                        <Input
+                          id="floor_no"
+                          type="number"
+                          placeholder="5"
+                          value={formData.floor_no}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              floor_no: e.target.value,
+                            }))
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="total_floors">Total Floors *</Label>
+                        <Input
+                          id="total_floors"
+                          type="number"
+                          placeholder="12"
+                          value={formData.total_floors}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              total_floors: e.target.value,
+                            }))
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+                      <div>
+                        <Label htmlFor="furnishing">Furnishing Status *</Label>
+                        <Select
+                          value={formData.furnishing}
                           onValueChange={(value) =>
                             setFormData((prev) => ({
                               ...prev,
-                              bathrooms: value,
+                              furnishing: value,
                             }))
                           }
                         >
                           <SelectTrigger className="mt-2">
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder="Select furnishing" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">1</SelectItem>
-                            <SelectItem value="2">2</SelectItem>
-                            <SelectItem value="3">3</SelectItem>
-                            <SelectItem value="4">4</SelectItem>
-                            <SelectItem value="5+">5+</SelectItem>
+                            <SelectItem value="Furnished">Furnished</SelectItem>
+                            <SelectItem value="Semi-Furnished">
+                              Semi-Furnished
+                            </SelectItem>
+                            <SelectItem value="Unfurnished">
+                              Unfurnished
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-
-                    {/* <div>
-                      <Label className="text-base font-medium mb-4 block">
-                        Property Amenities
-                      </Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {amenitiesList.map((amenity) => (
-                          <div
-                            key={amenity}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={amenity}
-                              checked={formData.amenities.includes(amenity)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    amenities: [...prev.amenities, amenity],
-                                  }));
-                                } else {
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    amenities: prev.amenities.filter(
-                                      (a) => a !== amenity
-                                    ),
-                                  }));
-                                }
-                              }}
-                            />
-                            <Label htmlFor={amenity} className="text-sm">
-                              {amenity}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div> */}
-
-                    {formData.amenities.length > 0 && (
                       <div>
-                        <Label className="text-sm font-medium mb-2 block">
-                          Selected Amenities:
+                        <Label htmlFor="availability_status">
+                          Availability *
                         </Label>
-                        <div className="flex flex-wrap gap-2">
-                          {formData.amenities.map((amenity) => (
-                            <Badge
-                              key={amenity}
-                              variant="secondary"
-                              className="px-3 py-1"
-                            >
-                              {amenity}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-4 w-4 p-0 ml-2 hover:bg-transparent"
-                                onClick={() => {
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    amenities: prev.amenities.filter(
-                                      (a) => a !== amenity
-                                    ),
-                                  }));
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </Badge>
-                          ))}
-                        </div>
+                        <Select
+                          value={formData.availability_status}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              availability_status: value,
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select availability" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Ready to Move">
+                              Ready to Move
+                            </SelectItem>
+                            <SelectItem value="Under Construction">
+                              Under Construction
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
+                      <div>
+                        <Label htmlFor="ownership_type">Ownership Type *</Label>
+                        <Select
+                          value={formData.ownership_type}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              ownership_type: value,
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select ownership" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Freehold">Freehold</SelectItem>
+                            <SelectItem value="Leasehold">Leasehold</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="property_status">
+                          Property Status *
+                        </Label>
+                        <Select
+                          value={formData.property_status}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              property_status: value,
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Sold">Sold</SelectItem>
+                            <SelectItem value="Rented">Rented</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="age_of_property">
+                          Age of Property (years) *
+                        </Label>
+                        <Input
+                          id="age_of_property"
+                          placeholder="5"
+                          value={formData.age_of_property}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              age_of_property: e.target.value,
+                            }))
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="possession_date">
+                          Possession Date *
+                        </Label>
+                        <Input
+                          id="possession_date"
+                          type="date"
+                          value={formData.possession_date}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              possession_date: e.target.value,
+                            }))
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                    </div>
+                    <div className="pt-6 flex items-center space-x-2">
+                      <Checkbox
+                        id="rera_approved"
+                        checked={formData.rera_approved}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            rera_approved: !!checked,
+                          }))
+                        }
+                      />
+                      <Label htmlFor="rera_approved">RERA Approved</Label>
+                    </div>
                   </div>
                 )}
 
@@ -690,15 +786,17 @@ const handleSubmit = async (e?: React.FormEvent) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="md:col-span-2">
-                        <Label htmlFor="address">Full Address *</Label>
+                        <Label htmlFor="location">
+                          Full Address / Location *
+                        </Label>
                         <Textarea
-                          id="address"
+                          id="location"
                           placeholder="Building name, street address, landmark..."
-                          value={formData.address}
+                          value={formData.location}
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              address: e.target.value,
+                              location: e.target.value,
                             }))
                           }
                           className="mt-2"
@@ -706,77 +804,41 @@ const handleSubmit = async (e?: React.FormEvent) => {
                       </div>
 
                       <div>
-                        <Label htmlFor="city">City *</Label>
+                        <Label htmlFor="latitude">Latitude *</Label>
                         <Input
-                          id="city"
-                          placeholder="Mumbai"
-                          value={formData.city}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              city: e.target.value,
-                            }))
-                          }
-                          className="mt-2"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="state">State *</Label>
-                        <Select
-                          value={formData.state}
-                          onValueChange={(value) =>
-                            setFormData((prev) => ({ ...prev, state: value }))
-                          }
-                        >
-                          <SelectTrigger className="mt-2">
-                            <SelectValue placeholder="Select state" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="maharashtra">
-                              Maharashtra
-                            </SelectItem>
-                            <SelectItem value="delhi">Delhi</SelectItem>
-                            <SelectItem value="karnataka">Karnataka</SelectItem>
-                            <SelectItem value="gujarat">Gujarat</SelectItem>
-                            <SelectItem value="rajasthan">Rajasthan</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="pincode">PIN Code *</Label>
-                        <Input
-                          id="pincode"
+                          id="latitude"
                           type="number"
-                          placeholder="400050"
-                          value={formData.pincode}
+                          step="any"
+                          placeholder="19.0760"
+                          value={formData.latitude}
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              pincode: e.target.value,
+                              latitude: e.target.value,
+                            }))
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="longitude">Longitude *</Label>
+                        <Input
+                          id="longitude"
+                          type="number"
+                          step="any"
+                          placeholder="72.8777"
+                          value={formData.longitude}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              longitude: e.target.value,
                             }))
                           }
                           className="mt-2"
                         />
                       </div>
                     </div>
-
-                    {/* <div className="mt-8">
-                      <Label className="text-base font-medium mb-4 block">
-                        Map Location
-                      </Label>
-                      <div className="h-64 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/25">
-                        <div className="text-center text-muted-foreground">
-                          <MapPin className="h-8 w-8 mx-auto mb-2" />
-                          <p>Interactive Map</p>
-                          <p className="text-sm">Click to set exact location</p>
-                          <Button variant="outline" className="mt-3" size="sm">
-                            Use Current Location
-                          </Button>
-                        </div>
-                      </div>
-                    </div> */}
                   </div>
                 )}
 
@@ -785,64 +847,47 @@ const handleSubmit = async (e?: React.FormEvent) => {
                   <div className="space-y-6">
                     <div className="text-center mb-8">
                       <Camera className="h-12 w-12 mx-auto text-primary mb-4" />
-                      <h2 className="text-2xl font-bold">Images </h2>
-                      <p className="text-muted-foreground">
-                        Upload high-quality photos 
-                      </p>
+                      <h2 className="text-2xl font-bold">Images & Documents</h2>
+                      <p className="text-muted-foreground">Upload high-quality photos and legal documents</p>
                     </div>
 
                     <Tabs defaultValue="images" className="w-full">
-                      <TabsList className="grid grid-cols-1 w-full ">
-                        <TabsTrigger value="images">
-                          Property Images
-                        </TabsTrigger>
-                        {/* <TabsTrigger value="documents">
-                          Legal Documents
-                        </TabsTrigger> */}
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="images">Property Images</TabsTrigger>
+                        <TabsTrigger value="documents">Legal Documents</TabsTrigger>
                       </TabsList>
 
                       <TabsContent value="images" className="space-y-6">
                         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
                           <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-medium mb-2">
-                            Upload Property Images
-                          </h3>
+                          <h3 className="text-lg font-medium mb-2">Upload Property Images</h3>
                           <p className="text-muted-foreground mb-4">
-                            Add high-quality photos to showcase your property.
-                            First image will be the cover photo.
+                            Add high-quality photos to showcase your property. First image will be the cover photo.
                           </p>
-
                           <input
                             type="file"
                             multiple
                             accept="image/*"
                             onChange={handleImageUpload}
-                            style={{ display: "none" }}
+                            className="hidden"
                             id="image-upload"
                           />
-
                           <Button
                             variant="outline"
-                            onClick={() =>
-                              document.getElementById("image-upload")?.click()
-                            }
-                            type="button"
+                            className="cursor-pointer"
+                            onClick={() => document.getElementById('image-upload')?.click()}
                           >
                             <Upload className="mr-2 h-4 w-4" />
                             Choose Images
                           </Button>
-
                           <p className="text-xs text-muted-foreground mt-2">
-                            Supported formats: JPG, PNG, WebP (Max 10 images,
-                            5MB each)
+                            Supported formats: JPG, PNG, WebP (Max 10 images, 5MB each)
                           </p>
                         </div>
 
                         {uploadedImages.length > 0 && (
                           <div>
-                            <h4 className="font-medium mb-4">
-                              Uploaded Images ({uploadedImages.length})
-                            </h4>
+                            <h4 className="font-medium mb-4">Uploaded Images ({uploadedImages.length})</h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               {uploadedImages.map((image, index) => (
                                 <div key={index} className="relative group">
@@ -852,21 +897,15 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                     className="w-full h-24 object-cover rounded-lg border"
                                   />
                                   {index === 0 && (
-                                    <Badge className="absolute top-2 left-2 text-xs">
-                                      Cover
-                                    </Badge>
+                                    <Badge className="absolute top-2 left-2 text-xs">Cover</Badge>
                                   )}
                                   <Button
                                     variant="destructive"
                                     size="sm"
                                     className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={() => {
-                                      setUploadedImages((prev) =>
-                                        prev.filter((_, i) => i !== index)
-                                      );
-                                      setImageFiles((prev) =>
-                                        prev.filter((_, i) => i !== index)
-                                      );
+                                      setUploadedImages(prev => prev.filter((_, i) => i !== index));
+                                      setImageFiles(prev => prev.filter((_, i) => i !== index));
                                     }}
                                   >
                                     <X className="h-3 w-3" />
@@ -878,69 +917,51 @@ const handleSubmit = async (e?: React.FormEvent) => {
                         )}
                       </TabsContent>
 
-                      {/* <TabsContent value="documents" className="space-y-6">
+                      <TabsContent value="documents" className="space-y-6">
                         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                          <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-medium mb-2">
-                            Upload Legal Documents
-                          </h3>
+                          <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                          <h3 className="text-lg font-medium mb-2">Upload Legal Documents</h3>
                           <p className="text-muted-foreground mb-4">
-                            Upload property documents for verification and trust
-                            building.
+                            Upload documents like title deed, tax receipts, etc.
                           </p>
-
                           <input
                             type="file"
                             multiple
-                            accept=".pdf,.doc,.docx"
+                            accept=".pdf"
                             onChange={handleDocumentUpload}
-                            style={{ display: "none" }}
+                            className="hidden"
                             id="document-upload"
                           />
-
                           <Button
                             variant="outline"
-                            onClick={() =>
-                              document
-                                .getElementById("document-upload")
-                                ?.click()
-                            }
-                            type="button"
+                            className="cursor-pointer"
+                            onClick={() => document.getElementById('document-upload')?.click()}
                           >
                             <Upload className="mr-2 h-4 w-4" />
                             Choose Documents
                           </Button>
-
                           <p className="text-xs text-muted-foreground mt-2">
-                            Supported formats: PDF, DOC, DOCX (Max 5MB each)
+                            Supported formats: PDF (Max 5 documents, 10MB each)
                           </p>
                         </div>
 
                         {uploadedDocuments.length > 0 && (
                           <div>
-                            <h4 className="font-medium mb-4">
-                              Uploaded Documents ({uploadedDocuments.length})
-                            </h4>
+                            <h4 className="font-medium mb-4">Uploaded Documents ({uploadedDocuments.length})</h4>
                             <div className="space-y-2">
                               {uploadedDocuments.map((doc, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center justify-between p-3 border rounded-lg"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <FileText className="h-5 w-5 text-muted-foreground" />
+                                <div key={index} className="flex items-center justify-between p-2 border rounded-lg">
+                                  <div className="flex items-center space-x-2">
+                                    <FileText className="h-4 w-4" />
                                     <span className="text-sm">{doc.name}</span>
                                   </div>
                                   <Button
                                     variant="destructive"
                                     size="sm"
+                                    className="h-6 w-6 p-0"
                                     onClick={() => {
-                                      setUploadedDocuments((prev) =>
-                                        prev.filter((_, i) => i !== index)
-                                      );
-                                      setDocumentFiles((prev) =>
-                                        prev.filter((_, i) => i !== index)
-                                      );
+                                      setUploadedDocuments(prev => prev.filter((_, i) => i !== index));
+                                      setDocumentFiles(prev => prev.filter((_, i) => i !== index));
                                     }}
                                   >
                                     <X className="h-3 w-3" />
@@ -950,7 +971,20 @@ const handleSubmit = async (e?: React.FormEvent) => {
                             </div>
                           </div>
                         )}
-                      </TabsContent> */}
+
+                        <div className="bg-warning/10 p-4 rounded-lg">
+                          <div className="flex items-start space-x-3">
+                            <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
+                            <div>
+                              <h4 className="font-medium text-warning">Document Verification</h4>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                All uploaded documents will be verified by our AI system and legal team. 
+                                This ensures authenticity and builds trust with potential buyers.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </TabsContent>
                     </Tabs>
                   </div>
                 )}
@@ -985,10 +1019,10 @@ const handleSubmit = async (e?: React.FormEvent) => {
                           />
                           <p className="text-sm text-muted-foreground mt-1">
                             Price per sq ft: ₹
-                            {formData.price && formData.area
+                            {formData.price && formData.area_sqft
                               ? Math.round(
                                   parseInt(formData.price) /
-                                    parseInt(formData.area)
+                                    parseInt(formData.area_sqft)
                                 ).toLocaleString()
                               : "0"}
                           </p>
@@ -996,11 +1030,11 @@ const handleSubmit = async (e?: React.FormEvent) => {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="maintenance">
+                            <Label htmlFor="maintenance_cost">
                               Maintenance (₹/month)
                             </Label>
                             <Input
-                              id="maintenance"
+                              id="maintenance_cost"
                               type="number"
                               placeholder="5000"
                               className="mt-2"
@@ -1045,7 +1079,8 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                 Recommended Price Range
                               </p>
                               <p className="text-2xl font-bold text-primary">
-                                ₹{formData.area ? getSuggestedPrice() : "0"}
+                                ₹
+                                {formData.area_sqft ? getSuggestedPrice() : "0"}
                               </p>
                               <p className="text-sm text-muted-foreground mt-1">
                                 Based on area, location, and market trends
@@ -1061,10 +1096,10 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                 <span>Your Price</span>
                                 <span>
                                   ₹
-                                  {formData.price && formData.area
+                                  {formData.price && formData.area_sqft
                                     ? Math.round(
                                         parseInt(formData.price) /
-                                          parseInt(formData.area)
+                                          parseInt(formData.area_sqft)
                                       ).toLocaleString()
                                     : "0"}
                                   /sq ft
@@ -1082,11 +1117,11 @@ const handleSubmit = async (e?: React.FormEvent) => {
                               variant="outline"
                               className="w-full mt-4"
                               onClick={() => {
-                                if (formData.area) {
+                                if (formData.area_sqft) {
                                   setFormData((prev) => ({
                                     ...prev,
                                     price: (
-                                      parseInt(formData.area) * 25000
+                                      parseInt(formData.area_sqft) * 25000
                                     ).toString(),
                                   }));
                                 }
@@ -1161,9 +1196,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                             </h4>
                             <p className="text-muted-foreground text-sm mb-3 flex items-center">
                               <MapPin className="h-3 w-3 mr-1" />
-                              {formData.city && formData.state
-                                ? `${formData.city}, ${formData.state}`
-                                : "Location"}
+                              {formData.location || "Location"}
                             </p>
                             <div className="text-2xl font-bold text-primary mb-3">
                               ₹
@@ -1182,7 +1215,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                               </span>
                               <span className="flex items-center">
                                 <Square className="h-3 w-3 mr-1" />
-                                {formData.area || "0"} sq ft
+                                {formData.area_sqft || "0"} sq ft
                               </span>
                             </div>
                             <div className="flex gap-2">
@@ -1222,7 +1255,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                 <span className="text-muted-foreground">
                                   Type:
                                 </span>{" "}
-                                {formData.propertyType || "Not set"}
+                                {formData.property_type || "Not set"}
                               </p>
                               <p>
                                 <span className="text-muted-foreground">
@@ -1245,7 +1278,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                 <span className="text-muted-foreground">
                                   Area:
                                 </span>{" "}
-                                {formData.area || "Not set"} sq ft
+                                {formData.area_sqft || "Not set"} sq ft
                               </p>
                               <p>
                                 <span className="text-muted-foreground">
@@ -1259,12 +1292,6 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                 </span>{" "}
                                 {formData.bathrooms || "Not set"}
                               </p>
-                              {/* <p>
-                                <span className="text-muted-foreground">
-                                  Amenities:
-                                </span>{" "}
-                                {formData.amenities.length} selected
-                              </p> */}
                             </div>
                           </Card>
 
@@ -1283,7 +1310,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                 <span className="text-muted-foreground">
                                   Documents:
                                 </span>{" "}
-                                Upload pending
+                                {uploadedDocuments.length} uploaded
                               </p>
                             </div>
                           </Card>
@@ -1302,7 +1329,10 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                 <Save className="mr-2 h-4 w-4" />
                                 Save Draft
                               </Button>
-                              <Button className="w-full btn-hero">
+                              <Button
+                                className="w-full btn-hero"
+                                onClick={handleSubmit}
+                              >
                                 <CheckCircle className="mr-2 h-4 w-4" />
                                 Publish Listing
                               </Button>
@@ -1357,9 +1387,4 @@ const handleSubmit = async (e?: React.FormEvent) => {
     </div>
   );
 };
-
 export default AddProperty;
-
-// function toast(arg0: { title: string; description: string; variant: string; }) {
-//   throw new Error("Function not implemented.");
-// }

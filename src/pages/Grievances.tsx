@@ -664,7 +664,7 @@ const Grievances = () => {
               <MessageSquare className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-4">Live Chat</h3>
               <p className="text-muted-foreground mb-4">
-                Chat with our support agents
+                np with our support agents
               </p>
               <Button className="w-full">Start Live Chat</Button>
               <p className="text-sm text-muted-foreground mt-2">
