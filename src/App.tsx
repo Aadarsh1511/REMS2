@@ -8,7 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
+// import { Dashboard } from "./pages/Dashboard";
 // import PropertySearch from "./pages/PropertySearch";
 import PropertyDetail from "./pages/PropertyDetail";
 import AddProperty from "./pages/AddProperty";
@@ -47,6 +47,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { useState, useEffect } from "react";
 import { Index2 } from "./pages/Index2";
+import Dashboard from "./pages/Dashboard";
 
 
 
@@ -88,10 +89,11 @@ const App = () => {
               path="/login"
               element={<Login setisLoggeIn={setisLoggedIn} />}
             />
-            <Route path="/dashboard" element={<Dashboard />} />
+            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+            <Route path="/dashboard" element={<Dashboard/>}/>
             <Route path="/search" element={<Index2/>} />
             <Route path="index" element={<Index/>} />
-            <Route path="/property/:id" element={<PropertyDetail />} />
+            <Route path="/property/:slug" element={<PropertyDetail />} />
             <Route path="/add-property" element={<AddProperty />} />
             <Route path="/book-visit" element={<BookVisit />} />
             <Route path="/profile" element={<Profile />} />

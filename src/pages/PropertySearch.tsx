@@ -2,13 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  CardContent
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -17,26 +13,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
 import UnifiedPropertySearch from "@/components/UnifiedPropertySearch";
-import { searchPropertyTypes } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import {
-  Search,
-  Filter,
+  Plus,
   MapPin,
   Bed,
   Bath,
   Square,
   Heart,
-  Eye,
   Star,
-  Mic,
-  Plus,
 } from "lucide-react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { addWeeks } from "date-fns";
 
 const PropertySearch = ({ initialFilters, onFilterChange }) => {
   const navigate = useNavigate();
@@ -44,161 +31,137 @@ const PropertySearch = ({ initialFilters, onFilterChange }) => {
   const [priceRange, setPriceRange] = useState(initialFilters?.priceRange || [0, 1000000]);
   const [propertyType, setPropertyType] = useState(initialFilters?.propertyType || "");
   const [viewMode, setViewMode] = useState("grid");
-  const [selectedBedrooms, setSelectedBedrooms] = useState([]);
-  const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [sortBy, setSortBy] = useState(initialFilters?.sortBy || "relevance");
-  
-  // Separate state for original and filtered properties
+
   const [originalProperties, setOriginalProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
+  const [propertyImages, setPropertyImages] = useState({});
 
-  const handleVoiceSearch = () => {
-    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-
-      recognition.onstart = () => {
-        toast({
-          title: "Voice Search Active",
-          description: "Listening... Please speak your search query.",
-        });
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setSearchTerm(transcript);
-        toast({
-          title: "Voice Recognized",
-          description: `Searching for: "${transcript}"`,
-        });
-      };
-
-      recognition.onerror = () => {
-        toast({
-          title: "Voice Search Error",
-          description: "Please try again or use text search.",
-          variant: "destructive",
-        });
-      };
-
-      recognition.start();
-    } else {
-      toast({
-        title: "Voice Search Not Supported",
-        description: "Please use text search instead.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const toggleFavorite = (propertyId) => {
-    setFavorites((prev) =>
-      prev.includes(propertyId)
-        ? prev.filter((id) => id !== propertyId)
-        : [...prev, propertyId]
-    );
-    toast({
-      title: favorites.includes(propertyId)
-        ? "Removed from Favorites"
-        : "Added to Favorites",
-      description: favorites.includes(propertyId)
-        ? "Property removed from your wishlist."
-        : "Property saved to your wishlist.",
-    });
-  };
-
-  const handleContactOwner = (propertyId) => {
-    toast({
-      title: "Connecting to Owner",
-      description: "Opening contact options...",
-    });
-  };
-
-  // Apply search filter
   const applySearchFilter = () => {
     let filtered = [...originalProperties];
 
-    // Apply search term filter
     if (searchTerm.trim()) {
-      filtered = filtered.filter(property =>
-        (property.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (property.location?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (property.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (property.type?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      const lowercasedTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (property) =>
+          property.title?.toLowerCase().includes(lowercasedTerm) ||
+          property.location?.toLowerCase().includes(lowercasedTerm) ||
+          property.description?.toLowerCase().includes(lowercasedTerm)
       );
     }
 
-    // Apply property type filter
     if (propertyType && propertyType !== "all") {
-      filtered = filtered.filter(property => 
-        (property.type?.toLowerCase() || '').includes(propertyType.toLowerCase())
-      );
+      filtered = filtered.filter((property) => property.property_type?.toString() === propertyType);
     }
 
-    // Apply sorting
     filtered = sortProperties(filtered, sortBy);
     setFilteredProperties(filtered);
   };
-  // Fetch properties from API
+
   const getUserData = async () => {
     const token = localStorage.getItem("access_token");
     const url = "http://127.0.0.1:8000/api/properties/";
     try {
-      let response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      response = await response.json();
-      const properties = Array.isArray(response) ? response : [];
-      setOriginalProperties(properties);
-      setFilteredProperties(properties); // Initialize filtered properties
+      if (!response.ok) {
+        throw new Error('Failed to fetch properties');
+      }
+      const data = await response.json();
+
+      const propertiesList = data?.results || (Array.isArray(data) ? data : []);
+
+      const processedProperties = propertiesList.map((property) => {
+        let amenityTags = [];
+        if (Array.isArray(property.amenities)) {
+            property.amenities.forEach(amenityObj => {
+                if (amenityObj && typeof amenityObj.amenity === 'string') {
+                    if (amenityObj.amenity.startsWith('[') && amenityObj.amenity.endsWith(']')) {
+                        try {
+                            const parsedAmenities = JSON.parse(amenityObj.amenity);
+                            amenityTags.push(...parsedAmenities);
+                        } catch (e) {
+                            amenityTags.push(amenityObj.amenity);
+                        }
+                    } else {
+                        amenityTags.push(amenityObj.amenity);
+                    }
+                }
+            });
+        }
+        return {
+          ...property,
+          tags: amenityTags,
+          area: property.area_sqft,
+        };
+      });
+
+      setOriginalProperties(processedProperties);
+      setFilteredProperties(processedProperties);
     } catch (error) {
       console.error("Error fetching properties:", error);
+      toast({ title: "Error", description: "Could not fetch properties." });
       setOriginalProperties([]);
       setFilteredProperties([]);
     }
   };
 
-  // Sorting function
+  useEffect(() => {
+    const fetchAllImages = async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token || originalProperties.length === 0) return;
+
+      const newImages = {};
+      const imagePromises = originalProperties.map(async (property) => {
+        if (propertyImages[property.slug]) {
+            newImages[property.slug] = propertyImages[property.slug];
+            return;
+        }
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/api/property-images/${property.slug}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (response.ok) {
+            const images = await response.json();
+            newImages[property.slug] = images;
+          } else {
+            newImages[property.slug] = [];
+          }
+        } catch (error) {
+          console.error(`Failed to fetch images for ${property.slug}`, error);
+          newImages[property.slug] = [];
+        }
+      });
+
+      await Promise.all(imagePromises);
+      setPropertyImages(prev => ({ ...prev, ...newImages }));
+    };
+
+    fetchAllImages();
+  }, [originalProperties]);
+
   const sortProperties = (properties, sortType) => {
-    if (!properties || properties.length === 0) return properties;
-
     const sorted = [...properties];
-
     switch (sortType) {
       case "price-low":
-        return sorted.sort((a, b) => {
-          const priceA = parseFloat(a.price?.replace(/[₹,]/g, '') || "0");
-          const priceB = parseFloat(b.price?.replace(/[₹,]/g, '') || "0");
-          return priceA - priceB;
-        });
+        return sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
       case "price-high":
-        return sorted.sort((a, b) => {
-          const priceA = parseFloat(a.price?.replace(/[₹,]/g, '') || "0");
-          const priceB = parseFloat(b.price?.replace(/[₹,]/g, '') || "0");
-          return priceB - priceA;
-        });
+        return sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
       case "newest":
-        return sorted.sort((a, b) => {
-          const dateA = new Date(a.created_at || 0).getTime();
-          const dateB = new Date(b.created_at || 0).getTime();
-          return dateB - dateA;
-        });
+        return sorted.sort((a, b) => new Date(b.listed_on).getTime() - new Date(a.listed_on).getTime());
       case "relevance":
       default:
-        return sorted.sort((a, b) => a.id - b.id);
+        return sorted.sort((a, b) => (b.ai_recommended_score || 0) - (a.ai_recommended_score || 0));
     }
   };
 
-  // Initial data fetch
   useEffect(() => {
     getUserData();
   }, []);
 
-  // Sync with initial filters from Dashboard
   useEffect(() => {
     if (initialFilters) {
       setSearchTerm(initialFilters.searchTerm || "");
@@ -208,263 +171,133 @@ const PropertySearch = ({ initialFilters, onFilterChange }) => {
     }
   }, [initialFilters]);
 
-  // Apply search filter when search term or property type changes
   useEffect(() => {
-    if (originalProperties.length > 0) {
-      applySearchFilter();
-    }
-  }, [searchTerm, propertyType, originalProperties]);
+    applySearchFilter();
+  }, [searchTerm, propertyType, sortBy, originalProperties]);
 
-  // Apply sorting when sortBy changes
-  useEffect(() => {
-    if (originalProperties.length > 0) {
-      applySearchFilter();
-    }
-  }, [sortBy]);
-
-  // Handle sort change
   const handleSortChange = (value) => {
     setSortBy(value);
-    
-    // Notify parent component of filter change
     if (onFilterChange) {
-      onFilterChange({
-        sortBy: value,
-        priceRange,
-        propertyType,
-        searchTerm
-      });
+      onFilterChange({ sortBy: value, priceRange, propertyType, searchTerm });
     }
+  };
+
+  const getPropertyImageURL = (property) => {
+    const images = propertyImages[property.slug];
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return '/placeholder.svg';
+    }
+    const primaryImage = images.find(img => img.is_primary);
+    if (primaryImage && primaryImage.image) {
+      return primaryImage.image;
+    }
+    return images[0]?.image || '/placeholder.svg';
+  };
+
+  const toggleFavorite = (e, propertySlug) => {
+    e.stopPropagation();
+    setFavorites((prev) =>
+      prev.includes(propertySlug)
+        ? prev.filter((slug) => slug !== propertySlug)
+        : [...prev, propertySlug]
+    );
+    toast({
+      title: favorites.includes(propertySlug) ? "Removed from Favorites" : "Added to Favorites",
+    });
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Property Type Search Section */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold mb-2">Search Property Types</h2>
-          <p className="text-muted-foreground">
-            Find properties by type with instant search
-          </p>
+          <h2 className="text-2xl font-bold mb-2">Find Your Perfect Property</h2>
+          <p className="text-muted-foreground">Search across thousands of listings with advanced filters.</p>
         </div>
         <UnifiedPropertySearch
-          onSearchChange={(query) => {
-            setSearchTerm(query);
-          }}
-          onPropertyTypeSelect={(typeId) => {
-            setPropertyType(typeId.toString());
-          }}
+          onSearchChange={(query) => setSearchTerm(query)}
+          onPropertyTypeSelect={(typeId) => setPropertyType(typeId ? typeId.toString() : "all")}
         />
       </div>
 
-      {/* Results */}
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold">Search Results</h2>
-              <p className="text-muted-foreground">
-                {filteredProperties.length} properties found
-              </p>
+              <p className="text-muted-foreground">{filteredProperties.length} properties found</p>
             </div>
             <div className="flex items-center gap-4">
-              <Button
-                onClick={() => navigate("/add-property")}
-                className="btn-property"
-              >
+              <Button onClick={() => navigate("/add-property")} className="btn-property">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Property
               </Button>
-              <Select
-                value={sortBy}
-                onValueChange={handleSortChange}
-              >
+              <Select value={sortBy} onValueChange={handleSortChange}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="relevance">Relevance</SelectItem>
-                  <SelectItem value="price-low">
-                    Price: Low to High
-                  </SelectItem>
-                  <SelectItem value="price-high">
-                    Price: High to Low
-                  </SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
                   <SelectItem value="newest">Newest First</SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                >
-                  Grid
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                >
-                  List
-                </Button>
+                <Button variant={viewMode === "grid" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("grid")}>Grid</Button>
+                <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("list")}>List</Button>
               </div>
             </div>
           </div>
 
-          <div
-            className={`grid gap-6 ${
-              viewMode === "grid"
-                ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                : "grid-cols-1"
-            }`}
-          >
+          <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}>
             {filteredProperties.map((property) => (
               <Card
-                key={property.id}
-                className="hover:shadow-lg transition-all duration-300 overflow-hidden border-border/50 hover:border-primary/20"
+                key={property.slug}
+                className="cursor-pointer hover:shadow-xl transition-all duration-300 overflow-hidden border-border/50 hover:border-primary/20 group"
+                onClick={() => navigate(`/property/${property.slug}`)}
               >
-                <div className="property-image relative h-48">
+                <div className="relative h-56">
                   <img
-                    src={property.image || property.description || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=500"}
+                    src={getPropertyImageURL(property)}
                     alt={property.title || "Property"}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=500";
-                    }}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  {property.featured && (
-                    <Badge className="absolute top-3 left-3 bg-accent text-accent-foreground">
-                      ⭐ Featured
-                    </Badge>
-                  )}
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground">{property.category}</Badge>
                   <Button
+                    size="icon"
                     variant="ghost"
-                    size="sm"
-                    className={`absolute top-3 right-3 ${
-                      favorites.includes(property.id)
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-white/80 hover:bg-white"
-                    }`}
-                    onClick={() => toggleFavorite(property.id)}
+                    className="absolute top-3 right-3 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
+                    onClick={(e) => toggleFavorite(e, property.slug)}
                   >
-                    <Heart
-                      className={`h-4 w-4 ${
-                        favorites.includes(property.id) ? "fill-current" : ""
-                      }`}
-                    />
+                    <Heart className={`h-5 w-5 ${favorites.includes(property.slug) ? 'fill-red-500 text-red-500' : ''}`} />
                   </Button>
-                  <div className="absolute bottom-3 left-3 flex items-center text-white bg-primary/80 px-2 py-1 rounded text-xs">
-                    <Eye className="h-3 w-3 mr-1" />
-                    {property.views || 0}
+                  <div className="absolute bottom-0 left-0 p-4 text-white">
+                    <h3 className="text-xl font-bold truncate">{property.title}</h3>
+                    <p className="text-sm flex items-center"><MapPin className="h-4 w-4 mr-1.5" /> {property.location}</p>
                   </div>
                 </div>
-
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-lg">
-                      {property.title || "Untitled Property"}
-                    </h3>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
-                      {property.rating || "4.0"}
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <p className="text-2xl font-extrabold text-primary">₹{parseFloat(property.price).toLocaleString('en-IN')}</p>
+                    <div className="flex items-center gap-1 text-sm font-semibold">
+                      <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                      <span>{property.ai_recommended_score ? (property.ai_recommended_score * 10).toFixed(1) : 'N/A'}</span>
                     </div>
                   </div>
-
-                  <p className="text-muted-foreground text-sm mb-3 flex items-center">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {property.location || "Location not specified"}
-                  </p>
-
-                  <div className="text-2xl font-bold text-primary mb-3">
-                    {property.price ? `₹${property.price}` : "Price on request"}
+                  <div className="flex justify-around items-center text-center border-t border-b py-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2"><Bed className="h-5 w-5 text-primary/80" /><span>{property.bedrooms} Beds</span></div>
+                    <div className="flex items-center gap-2"><Bath className="h-5 w-5 text-primary/80" /><span>{property.bathrooms} Baths</span></div>
+                    <div className="flex items-center gap-2"><Square className="h-5 w-5 text-primary/80" /><span>{property.area_sqft} sqft</span></div>
                   </div>
-
-                  <div className="flex justify-between text-sm text-muted-foreground mb-4">
-                    <span className="flex items-center">
-                      <Bed className="h-3 w-3 mr-1" />
-                      {property.bedrooms || 0} Bed
-                    </span>
-                    <span className="flex items-center">
-                      <Bath className="h-3 w-3 mr-1" />
-                      {property.bathrooms || 0} Bath
-                    </span>
-                    <span className="flex items-center">
-                      <Square className="h-3 w-3 mr-1" />
-                      {property.area || "N/A"}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {(property.tags || []).map((tag, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {tag}
-                      </Badge>
+                  <div className="flex flex-wrap gap-2">
+                    {property.tags.slice(0, 4).map(tag => (
+                      <Badge key={tag} variant="secondary">{tag}</Badge>
                     ))}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => navigate(`/property/${property.id}`)}
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      className="flex-1 btn-property"
-                      onClick={() => handleContactOwner(property.id)}
-                    >
-                      Contact Owner
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
-
-          {filteredProperties.length === 0 && originalProperties.length > 0 && (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">No properties found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try different search terms or clear filters
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchTerm("");
-                  setPropertyType("");
-                }}
-              >
-                Clear Search
-              </Button>
-            </div>
-          )}
-
-          {originalProperties.length === 0 && (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">No properties found</h3>
-              <p className="text-muted-foreground mb-4">
-                No properties available at the moment
-              </p>
-            </div>
-          )}
-
-          <div className="flex justify-center pt-8">
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" disabled>
-                Previous
-              </Button>
-              <Button variant="default">1</Button>
-              <Button variant="outline">2</Button>
-              <Button variant="outline">3</Button>
-              <Button variant="outline">Next</Button>
-            </div>
           </div>
         </div>
       </div>

@@ -136,73 +136,56 @@ import {
 } from "@/components/ui/select";
 
 const PropertyDetail = () => {
-  const { id } = useParams();
-  const propertyId = parseInt(id || "1");
-
-  // Fetch property images
-  const fetchPropertyImages = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/property-images/?property=${propertyId}`, {
-        headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Fetched images:', result);
-        console.log('Type of result:', typeof result);
-        console.log('Is array:', Array.isArray(result));
-        
-        // Handle different API response formats
-        let imageUrls = [];
-        
-        if (Array.isArray(result)) {
-          // If result is direct array
-          imageUrls = result.map((img: any) => img.image);
-        } else if (result.results && Array.isArray(result.results)) {
-          // If result has results property (paginated)
-          imageUrls = result.results.map((img: any) => img.image);
-        } else if (result.data && Array.isArray(result.data)) {
-          // If result has data property
-          imageUrls = result.data.map((img: any) => img.image);
-        }
-        
-        console.log('Extracted image URLs:', imageUrls);
-        
-        // Combine with default images
-        const defaultImages = [
-          "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
-          "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800",
-          "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
-        ];
-        
-        const allImages = [...imageUrls, ...defaultImages];
-        console.log('Final images array:', allImages);
-        setImages(allImages);
-      }
-    } catch (error) {
-      console.error('Error fetching images:', error);
-    }
-  };
-
-  // Load images on component mount
-  useEffect(() => {
-    fetchPropertyImages();
-  }, [propertyId]);
-  
+  console.log("PropertyDetail component rendering...");
+  const { slug } = useParams();
+  const [property, setProperty] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
-  const [images, setImages] = useState([
-    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
-    "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800",
-    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
-    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
-    "https://images.unsplash.com/photo-1493663284031-b7e3aaa4cab7?w=800",
-    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
-    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
-    "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=800",
-  ]);
+
+  // Derived state for images, will update when property changes
+  const images = property?.images?.map(img => img.image) || [];
+
+  useEffect(() => {
+    console.log("useEffect for fetching details triggered. Slug:", slug);
+    const fetchPropertyDetails = async () => {
+      if (!slug) {
+        console.log("No slug found, returning early.");
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+        };
+
+        const response = await fetch(`http://127.0.0.1:8000/api/properties/${slug}/`, {
+            headers: headers,
+        });
+
+        console.log("Fetch response status:", response.status);
+        if (response.ok) {
+          const data = await response.json();
+          setProperty(data);
+          console.log("Fetched Property Data:", data);
+          console.log("Property images array:", data?.images); // Add this line
+        } else {
+          toast.error("Failed to load property details.");
+          console.error("Fetch failed with status:", response.status);
+        }
+      } catch (error) {
+        toast.error("An error occurred while fetching property details.");
+        console.error("An error occurred during fetch:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPropertyDetails();
+  }, [slug]);
+
+  const propertyId = property?.slug;
   const [loanAmount, setLoanAmount] = useState(2000000);
   const [interestRate, setInterestRate] = useState(8.5);
   const [tenure, setTenure] = useState(20);
@@ -213,13 +196,13 @@ const PropertyDetail = () => {
   const [areaTo, setAreaTo] = useState("");
   const [fromUnit, setFromUnit] = useState("sqft");
   const [toUnit, setToUnit] = useState("sqm");
-  
+
   // Document form state
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
   const [documentForm, setDocumentForm] = useState({
     document_type: "",
     document_file: null,
-    property: 1
+    property: 1,
   });
 
   // Images form state
@@ -228,23 +211,24 @@ const PropertyDetail = () => {
     caption: "",
     is_primary: false,
     image: null,
-    property: 1
+    property: 1,
   });
 
   // Property Type form state
-  const [isPropertyTypeDialogOpen, setIsPropertyTypeDialogOpen] = useState(false);
+  const [isPropertyTypeDialogOpen, setIsPropertyTypeDialogOpen] =
+    useState(false);
   const [propertyTypeForm, setPropertyTypeForm] = useState({
     name: "",
-    description: ""
+    description: "",
   });
 
   // Amenities form state
   const [isAmenitiesDialogOpen, setIsAmenitiesDialogOpen] = useState(false);
   const [amenitiesForm, setAmenitiesForm] = useState({
     amenity: "",
-    property: propertyId
+    property: propertyId,
   });
-  
+
   // Get Best Deal form state
   const [bestDealForm, setBestDealForm] = useState({
     name: "",
@@ -252,13 +236,20 @@ const PropertyDetail = () => {
     email: "",
     property: propertyId,
     source: "Get Best Deal Form",
-    status: "New"
+    status: "New",
   });
 
   // Handle Get Best Deal form submission
   const handleGetBestDeal = async () => {
-    console.log("Form validation - Name:", bestDealForm.name, "Phone:", bestDealForm.phone, "Email:", bestDealForm.email);
-    
+    console.log(
+      "Form validation - Name:",
+      bestDealForm.name,
+      "Phone:",
+      bestDealForm.phone,
+      "Email:",
+      bestDealForm.email
+    );
+
     if (!bestDealForm.name || !bestDealForm.phone || !bestDealForm.email) {
       toast.error("Please fill all fields");
       return;
@@ -268,20 +259,23 @@ const PropertyDetail = () => {
     console.log("Property ID:", propertyId);
 
     try {
-      const token = localStorage.getItem('access_token');
-      console.log("Token for submission:", token ? "Token exists" : "No token found");
-      
+      const token = localStorage.getItem("access_token");
+      console.log(
+        "Token for submission:",
+        token ? "Token exists" : "No token found"
+      );
+
       const response = await fetch("http://127.0.0.1:8000/api/leads/", {
         method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(bestDealForm)
+        body: JSON.stringify(bestDealForm),
       });
 
       console.log("Submission response status:", response.status);
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log("Lead created successfully:", result);
@@ -292,11 +286,16 @@ const PropertyDetail = () => {
           email: "",
           property: propertyId,
           source: "Get Best Deal Form",
-          status: "New"
+          status: "New",
         });
       } else {
         const errorText = await response.text();
-        console.log("Failed response:", response.status, response.statusText, errorText);
+        console.log(
+          "Failed response:",
+          response.status,
+          response.statusText,
+          errorText
+        );
         toast.error("Failed to submit request");
       }
     } catch (error) {
@@ -308,78 +307,80 @@ const PropertyDetail = () => {
   // Dynamic amenities state
   const [dynamicAmenities, setDynamicAmenities] = useState([]);
 
-  // Fetch amenities on component mount and when propertyId changes
   useEffect(() => {
-    fetchAmenities();
-    // Update amenitiesForm with correct property ID
-    setAmenitiesForm(prev => ({
+    if (property && property.amenities && property.amenities.length > 0) {
+      const amenityValue = property.amenities[0].amenity;
+      let parsedAmenities = [];
+      try {
+        const parsed = JSON.parse(amenityValue);
+        if (Array.isArray(parsed)) {
+          parsedAmenities = parsed;
+        }
+      } catch (error) {
+        if (typeof amenityValue === 'string') {
+          parsedAmenities = [amenityValue];
+        }
+      }
+      
+      const amenitiesData = parsedAmenities.map(name => ({
+        icon: getAmenityIcon(name),
+        name: name,
+        available: true,
+      }));
+      setDynamicAmenities(amenitiesData);
+    }
+  }, [property]);
+
+  // Update amenitiesForm with correct property ID
+  useEffect(() => {
+    setAmenitiesForm((prev) => ({
       ...prev,
-      property: propertyId
+      property: propertyId,
     }));
   }, [propertyId]);
 
   // Function to get appropriate icon for amenity
   const getAmenityIcon = (amenityName: string) => {
     const name = amenityName.toLowerCase();
-    
-    if (name.includes('parking') || name.includes('car')) return Car;
-    if (name.includes('wifi') || name.includes('internet')) return Wifi;
-    if (name.includes('security') || name.includes('guard')) return Shield;
-    if (name.includes('gym') || name.includes('fitness')) return Dumbbell;
-    if (name.includes('garden') || name.includes('park')) return Trees;
-    if (name.includes('pool') || name.includes('swimming')) return Waves;
-    if (name.includes('elevator') || name.includes('lift')) return ArrowUp;
-    if (name.includes('power') || name.includes('backup')) return Zap;
-    if (name.includes('play') || name.includes('kids')) return Gamepad2;
-    if (name.includes('restaurant') || name.includes('food')) return Utensils;
-    if (name.includes('coffee') || name.includes('cafe')) return Coffee;
-    if (name.includes('ac') || name.includes('air')) return Wind;
-    if (name.includes('solar') || name.includes('sun')) return Sun;
-    if (name.includes('cctv') || name.includes('camera')) return Camera;
-    if (name.includes('club') || name.includes('community')) return Users;
-    
+
+    if (name.includes("parking") || name.includes("car")) return Car;
+    if (name.includes("wifi") || name.includes("internet")) return Wifi;
+    if (name.includes("security") || name.includes("guard")) return Shield;
+    if (name.includes("gym") || name.includes("fitness")) return Dumbbell;
+    if (name.includes("garden") || name.includes("park")) return Trees;
+    if (name.includes("pool") || name.includes("swimming")) return Waves;
+    if (name.includes("elevator") || name.includes("lift")) return ArrowUp;
+    if (name.includes("power") || name.includes("backup")) return Zap;
+    if (name.includes("play") || name.includes("kids")) return Gamepad2;
+    if (name.includes("restaurant") || name.includes("food")) return Utensils;
+    if (name.includes("coffee") || name.includes("cafe")) return Coffee;
+    if (name.includes("ac") || name.includes("air")) return Wind;
+    if (name.includes("solar") || name.includes("sun")) return Sun;
+    if (name.includes("cctv") || name.includes("camera")) return Camera;
+    if (name.includes("club") || name.includes("community")) return Users;
+
     return Building; // Default icon
   };
 
-  // Fetch amenities function
-  const fetchAmenities = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch("http://127.0.0.1:8000/api/property-amenities/", {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        // Filter amenities for current property only
-        const currentPropertyAmenities = result.filter(item => item.property === propertyId);
-        setDynamicAmenities(currentPropertyAmenities.map(item => ({
-          icon: getAmenityIcon(item.amenity),
-          name: item.amenity,
-          available: true
-        })));
-      }
-    } catch (error) {
-      console.error("Error fetching amenities:", error);
-    }
-  };
+  
 
   const handlePropertyTypeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Submitting property type data:", propertyTypeForm);
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch("http://127.0.0.1:8000/api/property-types/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(propertyTypeForm),
-      });
-      
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/property-types/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(propertyTypeForm),
+        }
+      );
+
       if (response.ok) {
         const result = await response.json();
         console.log("Property Type added successfully:", result);
@@ -387,13 +388,15 @@ const PropertyDetail = () => {
         setIsPropertyTypeDialogOpen(false);
         setPropertyTypeForm({
           name: "",
-          description: ""
+          description: "",
         });
       } else {
         const errorData = await response.json();
         console.log("Failed response:", response.status, response.statusText);
         console.log("Error details:", errorData);
-        toast.error(`Failed to add property type: ${JSON.stringify(errorData)}`);
+        toast.error(
+          `Failed to add property type: ${JSON.stringify(errorData)}`
+        );
       }
     } catch (error) {
       console.error("Error:", error);
@@ -401,131 +404,444 @@ const PropertyDetail = () => {
     }
   };
 
-  const handleDocumentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Submitting document data:", documentForm);
-    
-    const formData = new FormData();
-    formData.append('document_type', documentForm.document_type);
-    formData.append('property', documentForm.property.toString());
-    if (documentForm.document_file) {
-      formData.append('document_file', documentForm.document_file);
+ 
+const handleDocumentSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  console.log("Submitting document data:", documentForm);
+
+  // Validation checks
+  if (!documentForm.document_type.trim()) {
+    toast.error("Document type is required");
+    return;
+  }
+
+  if (!documentForm.document_file) {
+    toast.error("Please select a document file");
+    return;
+  }
+
+  // Check file size (e.g., max 10MB)
+  if (documentForm.document_file.size > 10 * 1024 * 1024) {
+    toast.error("File size should be less than 10MB");
+    return;
+  }
+
+  // Check file type
+  const allowedTypes = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+  if (!allowedTypes.includes(documentForm.document_file.type)) {
+    toast.error("Only PDF and Word documents are allowed");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("document_type", documentForm.document_type.trim());
+  
+  // OPTION 1: If you have access to property slug directly
+  // Replace 'propertySlug' with your actual property slug variable
+  formData.append("property_slug", slug); // Add this line
+  
+  // OPTION 2: If you only have property data and need to extract slug
+  // formData.append("property_slug", property?.slug || ""); // Add this line instead
+  
+  formData.append("document_file", documentForm.document_file);
+
+  // Debug: Log FormData contents
+  console.log("FormData contents:");
+  for (let [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
+
+  try {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      toast.error("Authentication required. Please log in.");
+      return;
     }
-    
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch("http://127.0.0.1:8000/api/property-documents/", {
+
+    console.log("Sending request to API...");
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/property-documents/",
+      {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
+          // Don't set Content-Type for FormData - let browser set it with boundary
         },
         body: formData,
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Document added successfully:", result);
-        toast.success("Document added successfully!");
-        setIsDocumentDialogOpen(false);
-        setDocumentForm({
-          document_type: "",
-          document_file: null,
-          property: 1
-        });
-      } else {
-        console.log("Failed response:", response.status, response.statusText);
-        toast.error("Failed to add document");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error adding document");
-    }
-  };
+    );
 
-  const handleImagesSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Submitting images data:", imagesForm);
-    
-    const formData = new FormData();
-    formData.append('caption', imagesForm.caption);
-    formData.append('is_primary', imagesForm.is_primary.toString());
-    formData.append('property', imagesForm.property.toString());
-    if (imagesForm.image) {
-      formData.append('image', imagesForm.image);
+    console.log("Response status:", response.status);
+    console.log("Response headers:", response.headers);
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log("Document added successfully:", result);
+      toast.success("Document added successfully!");
+      setIsDocumentDialogOpen(false);
+      setDocumentForm({
+        document_type: "",
+        document_file: null,
+        property: propertyId,
+      });
+    } else {
+      // Get detailed error information
+      const contentType = response.headers.get("content-type");
+      let errorData;
+
+      if (contentType && contentType.includes("application/json")) {
+        errorData = await response.json();
+      } else {
+        errorData = await response.text();
+      }
+
+      console.error("Failed response:", {
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData,
+      });
+
+      // Show specific error message if available
+      if (errorData && typeof errorData === "object") {
+        const errorMessages = [];
+
+        // Handle Django REST framework error format
+        if (errorData.document_type) {
+          errorMessages.push(
+            `Document type: ${errorData.document_type.join(", ")}`
+          );
+        }
+        if (errorData.document_file) {
+          errorMessages.push(
+            `Document file: ${errorData.document_file.join(", ")}`
+          );
+        }
+        if (errorData.property_slug) { // Updated to handle property_slug errors
+          errorMessages.push(`Property slug: ${errorData.property_slug.join(", ")}`);
+        }
+        if (errorData.non_field_errors) {
+          errorMessages.push(errorData.non_field_errors.join(", "));
+        }
+        if (errorData.detail) {
+          errorMessages.push(errorData.detail);
+        }
+
+        const errorMessage =
+          errorMessages.length > 0
+            ? errorMessages.join("; ")
+            : "Failed to add document";
+
+        toast.error(errorMessage);
+      } else {
+        toast.error(
+          `Failed to add document: ${response.status} ${response.statusText}`
+        );
+      }
     }
-    
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch("http://127.0.0.1:8000/api/property-images/", {
+  } catch (error) {
+    console.error("Network error:", error);
+    toast.error("Network error. Please check your connection and try again.");
+  }
+};
+
+
+
+  // const handleImagesSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   console.log("Submitting images data:", imagesForm);
+
+  //   const formData = new FormData();
+  //   formData.append("caption", imagesForm.caption);
+  //   formData.append("is_primary", imagesForm.is_primary.toString());
+  //   formData.append("property_slug", imagesForm.property.toString());
+  //   if (imagesForm.image) {
+  //     formData.append("image", imagesForm.image);
+  //   }
+
+  //   try {
+  //     const token = localStorage.getItem("access_token");
+  //     const response = await fetch(
+  //       "http://127.0.0.1:8000/api/property-images/",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: formData,
+  //       }
+  //     );
+
+  //     if (response.ok) {
+  //       const result = await response.json();
+  //       console.log("Image added successfully:", result);
+  //       toast.success("Image added successfully!");
+
+  //       // Images are now derived from the 'property' state, which is updated by fetchPropertyDetails.
+  //       // No explicit refresh needed here.
+
+  //       setIsImagesDialogOpen(false);
+  //       setImagesForm({
+  //         caption: "",
+  //         is_primary: false,
+  //         image: null,
+  //         property: propertyId,
+  //       });
+  //     } else {
+  //       console.log("Failed response:", response.status, response.statusText);
+  //       toast.error("Failed to add image");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //     toast.error("Error adding image");
+  //   }
+  // };
+
+  // Amenities
+
+const handleImagesSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  console.log("Submitting images data:", imagesForm);
+
+  // Validation checks
+  if (!imagesForm.image) {
+    toast.error("Please select an image file");
+    return;
+  }
+
+  // Check file size (e.g., max 5MB for images)
+  if (imagesForm.image.size > 5 * 1024 * 1024) {
+    toast.error("Image size should be less than 5MB");
+    return;
+  }
+
+  // Check file type
+  const allowedImageTypes = [
+    "image/jpeg",
+    "image/jpg", 
+    "image/png",
+    "image/webp"
+  ];
+  if (!allowedImageTypes.includes(imagesForm.image.type)) {
+    toast.error("Only JPEG, PNG, and WebP images are allowed");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("caption", imagesForm.caption);
+  formData.append("is_primary", imagesForm.is_primary.toString());
+  formData.append("property_slug", slug); // Add this line
+  formData.append("image", imagesForm.image);
+
+  // Debug: Log FormData contents
+  console.log("FormData contents:");
+  for (let [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
+
+  try {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      toast.error("Authentication required. Please log in.");
+      return;
+    }
+
+    console.log("Sending request to API...");
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/property-images/",
+      {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
+          // Don't set Content-Type for FormData - let browser set it with boundary
         },
         body: formData,
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Image added successfully:", result);
-        toast.success("Image added successfully!");
-        
-        // Refresh images after adding new one
-        await fetchPropertyImages();
-        
-        setIsImagesDialogOpen(false);
-        setImagesForm({
-          caption: "",
-          is_primary: false,
-          image: null,
-          property: 1
-        });
-      } else {
-        console.log("Failed response:", response.status, response.statusText);
-        toast.error("Failed to add image");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error adding image");
-    }
-  };
+    );
 
-  const handleAmenitiesSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Submitting amenities data:", amenitiesForm);
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch("http://127.0.0.1:8000/api/property-amenities/", {
+    console.log("Response status:", response.status);
+    console.log("Response headers:", response.headers);
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log("Image added successfully:", result);
+      toast.success("Image added successfully!");
+
+      
+
+      setIsImagesDialogOpen(false);
+      setImagesForm({
+        caption: "",
+        is_primary: false,
+        image: null,
+        property: propertyId,
+      });
+    } else {
+      // Get detailed error information
+      const contentType = response.headers.get("content-type");
+      let errorData;
+
+      if (contentType && contentType.includes("application/json")) {
+        errorData = await response.json();
+      } else {
+        errorData = await response.text();
+      }
+
+      console.error("Failed response:", {
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData,
+      });
+
+      // Show specific error message if available
+      if (errorData && typeof errorData === "object") {
+        const errorMessages = [];
+
+        // Handle Django REST framework error format
+        if (errorData.caption) {
+          errorMessages.push(`Caption: ${errorData.caption.join(", ")}`);
+        }
+        if (errorData.image) {
+          errorMessages.push(`Image: ${errorData.image.join(", ")}`);
+        }
+        if (errorData.is_primary) {
+          errorMessages.push(`Is Primary: ${errorData.is_primary.join(", ")}`);
+        }
+        if (errorData.property_slug) {
+          errorMessages.push(`Property slug: ${errorData.property_slug.join(", ")}`);
+        }
+        if (errorData.non_field_errors) {
+          errorMessages.push(errorData.non_field_errors.join(", "));
+        }
+        if (errorData.detail) {
+          errorMessages.push(errorData.detail);
+        }
+
+        const errorMessage =
+          errorMessages.length > 0
+            ? errorMessages.join("; ")
+            : "Failed to add image";
+
+        toast.error(errorMessage);
+      } else {
+        toast.error(
+          `Failed to add image: ${response.status} ${response.statusText}`
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Network error:", error);
+    toast.error("Network error. Please check your connection and try again.");
+  }
+};
+
+ const handleAmenitiesSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  console.log("Submitting amenities data:", amenitiesForm);
+
+  // Validation
+  if (!amenitiesForm.amenity.trim()) {
+    toast.error("Amenity is required");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      toast.error("Authentication required. Please log in.");
+      return;
+    }
+    const requestBody = {
+      amenity: amenitiesForm.amenity.trim(),
+      // OPTION 1: If you have access to property slug directly
+      property_slug: slug, // Replace with your property slug variable
+      
+     
+    };
+
+    console.log("Request body:", requestBody);
+
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/property-amenities/",
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(amenitiesForm),
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Amenity added successfully:", result);
-        toast.success("Amenity added successfully!");
-        setIsAmenitiesDialogOpen(false);
-        setAmenitiesForm({
-          amenity: "",
-          property: propertyId
-        });
-        // Refresh amenities list
-        fetchAmenities();
-      } else {
-        console.log("Failed response:", response.status, response.statusText);
-        toast.error("Failed to add amenity");
+        body: JSON.stringify(requestBody),
       }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error adding amenity");
+    );
+
+    console.log("Response status:", response.status);
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log("Amenity added successfully:", result);
+      toast.success("Amenity added successfully!");
+      setIsAmenitiesDialogOpen(false);
+      setAmenitiesForm({
+        amenity: "",
+        property: propertyId,
+      });
+    } else {
+      // Get detailed error information
+      const contentType = response.headers.get("content-type");
+      let errorData;
+
+      if (contentType && contentType.includes("application/json")) {
+        errorData = await response.json();
+      } else {
+        errorData = await response.text();
+      }
+
+      console.error("Failed response:", {
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData,
+      });
+
+      // Show specific error message if available
+      if (errorData && typeof errorData === "object") {
+        const errorMessages = [];
+
+        // Handle Django REST framework error format
+        if (errorData.amenity) {
+          errorMessages.push(`Amenity: ${errorData.amenity.join(", ")}`);
+        }
+        if (errorData.property_slug) {
+          errorMessages.push(`Property slug: ${errorData.property_slug.join(", ")}`);
+        }
+        if (errorData.non_field_errors) {
+          errorMessages.push(errorData.non_field_errors.join(", "));
+        }
+        if (errorData.detail) {
+          errorMessages.push(errorData.detail);
+        }
+
+        const errorMessage =
+          errorMessages.length > 0
+            ? errorMessages.join("; ")
+            : "Failed to add amenity";
+
+        toast.error(errorMessage);
+      } else if (typeof errorData === "string") {
+        toast.error(`Failed to add amenity: ${errorData}`);
+      } else {
+        toast.error(`Failed to add amenity: ${response.status} ${response.statusText}`);
+      }
     }
-  };
-
-
-
+  } catch (error) {
+    console.error("Network error:", error);
+    toast.error("Network error. Please check your connection and try again.");
+  }
+};
   const propertyHighlights = [
     {
       icon: Zap,
@@ -559,24 +875,7 @@ const PropertyDetail = () => {
     },
   ];
 
-  const amenities = [
-    { icon: Car, name: "Covered Parking", available: true },
-    { icon: Wifi, name: "High-Speed Internet", available: true },
-    { icon: Shield, name: "24/7 Security", available: true },
-    { icon: Dumbbell, name: "Fitness Center", available: true },
-    { icon: Trees, name: "Garden Area", available: true },
-    { icon: Waves, name: "Swimming Pool", available: true },
-    { icon: Wind, name: "Central AC", available: true },
-    { icon: Coffee, name: "Cafeteria", available: true },
-    { icon: Gamepad2, name: "Kids Play Area", available: true },
-    { icon: Utensils, name: "Community Kitchen", available: false },
-    { icon: Sun, name: "Solar Power", available: true },
-    { icon: Building, name: "Elevator", available: true },
-    { icon: Activity, name: "Jogging Track", available: true },
-    { icon: Users, name: "Club House", available: true },
-    { icon: Globe, name: "Intercom Facility", available: true },
-    { icon: Timer, name: "Power Backup", available: true },
-  ];
+  
 
   const nearbyPlaces = [
     {
@@ -1059,70 +1358,63 @@ const PropertyDetail = () => {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h1 className="text-4xl font-bold mb-3">
-                    Luxury 3BHK Apartment in Bandra West
+                    {property?.title}
                   </h1>
                   <p className="text-muted-foreground text-lg flex items-center mb-2">
                     <MapPin className="h-5 w-5 mr-2" />
-                    Carter Road, Bandra West, Mumbai, Maharashtra
+                    {property?.location}
                   </p>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center">
                       <Eye className="h-4 w-4 mr-1" />
-                      2,450 views
+                      {property?.views || 0} views
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1" />
-                      Listed 2 days ago
+                      Listed on {property?.listed_on ? new Date(property.listed_on).toLocaleDateString() : 'N/A'}
                     </div>
-                    <div className="flex items-center">
+                    {property?.rera_approved && <div className="flex items-center">
                       <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
                       Verified Property
-                    </div>
+                    </div>}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-4xl font-bold text-primary">
-                    ₹2,50,00,000
+                  ₹{property?.price ? parseFloat(property.price).toLocaleString('en-IN') : 'N/A'}
                   </div>
                   <div className="text-lg text-muted-foreground">
-                    ₹20,833/sq ft
+                  ₹{property?.price_per_sqft ? parseFloat(property.price_per_sqft).toLocaleString('en-IN') : 'N/A'}/sq ft
                   </div>
-                  <Badge className="mt-2 bg-green-100 text-green-800">
+                  {property?.ai_price_estimate && <Badge className="mt-2 bg-green-100 text-green-800">
                     Fair Price
-                  </Badge>
+                  </Badge>}
                 </div>
               </div>
 
               <div className="flex items-center gap-8 mb-6">
                 <div className="flex items-center">
                   <Bed className="h-5 w-5 mr-2 text-primary" />
-                  <span className="font-medium">3 Bedrooms</span>
+                  <span className="font-medium">{property?.bedrooms} Bedrooms</span>
                 </div>
                 <div className="flex items-center">
                   <Bath className="h-5 w-5 mr-2 text-primary" />
-                  <span className="font-medium">2 Bathrooms</span>
+                  <span className="font-medium">{property?.bathrooms} Bathrooms</span>
                 </div>
                 <div className="flex items-center">
                   <Square className="h-5 w-5 mr-2 text-primary" />
-                  <span className="font-medium">1,200 sq ft</span>
+                  <span className="font-medium">{property?.area_sqft} sq ft</span>
                 </div>
                 <div className="flex items-center">
                   <Star className="h-5 w-5 mr-2 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">4.8 Rating (124 reviews)</span>
+                  <span className="font-medium">{property?.ai_recommended_score || 'N/A'} Rating (0 reviews)</span>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">Ready to Move</Badge>
-                <Badge variant="secondary">Prime Location</Badge>
-                <Badge variant="secondary">Luxury Amenities</Badge>
-                <Badge className="bg-green-100 text-green-800">Best ROI</Badge>
-                <Badge className="bg-blue-100 text-blue-800">
-                  Great for Families
-                </Badge>
-                <Badge className="bg-purple-100 text-purple-800">
-                  Premium Builder
-                </Badge>
+                <Badge variant="secondary">{property?.availability_status}</Badge>
+                <Badge variant="secondary">{property?.furnishing}</Badge>
+                <Badge variant="secondary">{property?.ownership_type}</Badge>
               </div>
             </div>
 
@@ -1141,21 +1433,14 @@ const PropertyDetail = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-muted-foreground leading-relaxed text-lg mb-6">
-                        Experience luxury living at its finest in this stunning
-                        3BHK apartment located in the prestigious Carter Road
-                        area of Bandra West. This meticulously designed home
-                        offers panoramic views of the Arabian Sea and the
-                        bustling city skyline. With spacious interiors, premium
-                        finishes, and world-class amenities, this property
-                        represents the perfect blend of comfort, style, and
-                        convenience.
+                        {property?.description}
                       </p>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
                           <Square className="h-8 w-8 mx-auto mb-2 text-blue-600" />
                           <div className="text-2xl font-bold text-blue-600">
-                            1,200
+                            {property?.area_sqft}
                           </div>
                           <div className="text-sm text-blue-600">
                             Carpet Area (sq ft)
@@ -1164,19 +1449,19 @@ const PropertyDetail = () => {
                         <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
                           <Building className="h-8 w-8 mx-auto mb-2 text-green-600" />
                           <div className="text-2xl font-bold text-green-600">
-                            12th
+                            {property?.floor_no}
                           </div>
                           <div className="text-sm text-green-600">
-                            Floor (of 25)
+                            Floor (of {property?.total_floors})
                           </div>
                         </div>
                         <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
                           <Calendar className="h-8 w-8 mx-auto mb-2 text-purple-600" />
                           <div className="text-2xl font-bold text-purple-600">
-                            2019
+                            {property?.age_of_property}
                           </div>
                           <div className="text-sm text-purple-600">
-                            Year Built
+                            Property Age
                           </div>
                         </div>
                       </div>
@@ -1709,24 +1994,26 @@ const PropertyDetail = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[...amenities, ...dynamicAmenities].map((amenity, index) => (
-                          <div
-                            key={index}
-                            className={`flex flex-col items-center p-4 rounded-lg border transition-colors ${
-                              amenity.available
-                                ? "bg-green-50 border-green-200 text-green-700"
-                                : "bg-gray-50 border-gray-200 text-gray-400"
-                            }`}
-                          >
-                            <amenity.icon className="h-6 w-6 mb-2" />
-                            <span className="text-sm text-center font-medium">
-                              {amenity.name}
-                            </span>
-                            {amenity.available && (
-                              <CheckCircle className="h-4 w-4 mt-1 text-green-500" />
-                            )}
-                          </div>
-                        ))}
+                        {dynamicAmenities.map(
+                          (amenity, index) => (
+                            <div
+                              key={index}
+                              className={`flex flex-col items-center p-4 rounded-lg border transition-colors ${
+                                amenity.available
+                                  ? "bg-green-50 border-green-200 text-green-700"
+                                  : "bg-gray-50 border-gray-200 text-gray-400"
+                              }`}
+                            >
+                              <amenity.icon className="h-6 w-6 mb-2" />
+                              <span className="text-sm text-center font-medium">
+                                {amenity.name}
+                              </span>
+                              {amenity.available && (
+                                <CheckCircle className="h-4 w-4 mt-1 text-green-500" />
+                              )}
+                            </div>
+                          )
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -2958,7 +3245,10 @@ const PropertyDetail = () => {
                 <CardDescription>Frequently used features</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Dialog open={isPropertyTypeDialogOpen} onOpenChange={setIsPropertyTypeDialogOpen}>
+                <Dialog
+                  open={isPropertyTypeDialogOpen}
+                  onOpenChange={setIsPropertyTypeDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button
                       variant="property"
@@ -2976,35 +3266,54 @@ const PropertyDetail = () => {
                         Add a new property type category.
                       </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handlePropertyTypeSubmit} className="space-y-4">
+                    <form
+                      onSubmit={handlePropertyTypeSubmit}
+                      className="space-y-4"
+                    >
                       <div className="space-y-2">
                         <Label htmlFor="name">Name *</Label>
                         <Input
                           id="name"
                           value={propertyTypeForm.name}
-                          onChange={(e) => setPropertyTypeForm({...propertyTypeForm, name: e.target.value})}
+                          onChange={(e) =>
+                            setPropertyTypeForm({
+                              ...propertyTypeForm,
+                              name: e.target.value,
+                            })
+                          }
                           placeholder="e.g., Apartment, Villa, Office"
                           maxLength={100}
                           minLength={1}
                           required
                         />
-                        <p className="text-xs text-muted-foreground">Max 100 characters</p>
+                        <p className="text-xs text-muted-foreground">
+                          Max 100 characters
+                        </p>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
                         <textarea
                           id="description"
                           value={propertyTypeForm.description}
-                          onChange={(e) => setPropertyTypeForm({...propertyTypeForm, description: e.target.value})}
+                          onChange={(e) =>
+                            setPropertyTypeForm({
+                              ...propertyTypeForm,
+                              description: e.target.value,
+                            })
+                          }
                           placeholder="Brief description of this property type"
                           className="w-full p-3 border rounded-md resize-none"
                           rows={3}
                         />
                       </div>
-                      
+
                       <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={() => setIsPropertyTypeDialogOpen(false)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsPropertyTypeDialogOpen(false)}
+                        >
                           Cancel
                         </Button>
                         <Button type="submit">Add Property Type</Button>
@@ -3012,8 +3321,11 @@ const PropertyDetail = () => {
                     </form>
                   </DialogContent>
                 </Dialog>
-                
-                <Dialog open={isDocumentDialogOpen} onOpenChange={setIsDocumentDialogOpen}>
+
+                <Dialog
+                  open={isDocumentDialogOpen}
+                  onOpenChange={setIsDocumentDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
@@ -3037,37 +3349,56 @@ const PropertyDetail = () => {
                         <Input
                           id="document_type"
                           value={documentForm.document_type}
-                          onChange={(e) => setDocumentForm({...documentForm, document_type: e.target.value})}
+                          onChange={(e) =>
+                            setDocumentForm({
+                              ...documentForm,
+                              document_type: e.target.value,
+                            })
+                          }
                           placeholder="Enter document type"
                           maxLength={100}
                           required
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="document_file">Document File</Label>
                         <Input
                           id="document_file"
                           type="file"
                           accept=".pdf,.docx"
-                          onChange={(e) => setDocumentForm({...documentForm, document_file: e.target.files?.[0] || null})}
+                          onChange={(e) =>
+                            setDocumentForm({
+                              ...documentForm,
+                              document_file: e.target.files?.[0] || null,
+                            })
+                          }
                           required
                         />
                       </div>
-                      
-                      <div className="space-y-2">
+
+                      {/* <div className="space-y-2">
                         <Label htmlFor="property">Property ID</Label>
                         <Input
                           id="property"
                           type="number"
                           value={documentForm.property}
-                          onChange={(e) => setDocumentForm({...documentForm, property: parseInt(e.target.value)})}
+                          onChange={(e) =>
+                            setDocumentForm({
+                              ...documentForm,
+                              property: parseInt(e.target.value),
+                            })
+                          }
                           required
                         />
-                      </div>
-                      
+                      </div> */}
+
                       <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={() => setIsDocumentDialogOpen(false)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsDocumentDialogOpen(false)}
+                        >
                           Cancel
                         </Button>
                         <Button type="submit">Add Document</Button>
@@ -3075,7 +3406,14 @@ const PropertyDetail = () => {
                     </form>
                   </DialogContent>
                 </Dialog>
-                <Dialog open={isImagesDialogOpen} onOpenChange={setIsImagesDialogOpen}>
+
+
+
+
+                <Dialog
+                  open={isImagesDialogOpen}
+                  onOpenChange={setIsImagesDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
@@ -3100,44 +3438,68 @@ const PropertyDetail = () => {
                           id="image"
                           type="file"
                           accept="image/*"
-                          onChange={(e) => setImagesForm({...imagesForm, image: e.target.files?.[0] || null})}
+                          onChange={(e) =>
+                            setImagesForm({
+                              ...imagesForm,
+                              image: e.target.files?.[0] || null,
+                            })
+                          }
                           required
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="caption">Caption</Label>
                         <Input
                           id="caption"
                           value={imagesForm.caption}
-                          onChange={(e) => setImagesForm({...imagesForm, caption: e.target.value})}
+                          onChange={(e) =>
+                            setImagesForm({
+                              ...imagesForm,
+                              caption: e.target.value,
+                            })
+                          }
                           placeholder="e.g., Living room, Kitchen, Bedroom"
                           maxLength={255}
                         />
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="is_primary"
                           checked={imagesForm.is_primary}
-                          onCheckedChange={(checked) => setImagesForm({...imagesForm, is_primary: checked as boolean})}
+                          onCheckedChange={(checked) =>
+                            setImagesForm({
+                              ...imagesForm,
+                              is_primary: checked as boolean,
+                            })
+                          }
                         />
                         <Label htmlFor="is_primary">Is Primary</Label>
                       </div>
-                      
-                      <div className="space-y-2">
+
+                      {/* <div className="space-y-2">
                         <Label htmlFor="property_img">Property ID</Label>
                         <Input
                           id="property_img"
                           type="number"
                           value={imagesForm.property}
-                          onChange={(e) => setImagesForm({...imagesForm, property: parseInt(e.target.value)})}
+                          onChange={(e) =>
+                            setImagesForm({
+                              ...imagesForm,
+                              property: parseInt(e.target.value),
+                            })
+                          }
                           required
                         />
-                      </div>
-                      
+                      </div> */}
+
                       <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={() => setIsImagesDialogOpen(false)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsImagesDialogOpen(false)}
+                        >
                           Cancel
                         </Button>
                         <Button type="submit">Add Image</Button>
@@ -3145,8 +3507,11 @@ const PropertyDetail = () => {
                     </form>
                   </DialogContent>
                 </Dialog>
-                
-                <Dialog open={isAmenitiesDialogOpen} onOpenChange={setIsAmenitiesDialogOpen}>
+
+                <Dialog
+                  open={isAmenitiesDialogOpen}
+                  onOpenChange={setIsAmenitiesDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
@@ -3164,32 +3529,49 @@ const PropertyDetail = () => {
                         Add a new amenity for this property.
                       </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleAmenitiesSubmit} className="space-y-4">
+                    <form
+                      onSubmit={handleAmenitiesSubmit}
+                      className="space-y-4"
+                    >
                       <div className="space-y-2">
                         <Label htmlFor="amenity">Amenity</Label>
                         <Input
                           id="amenity"
                           value={amenitiesForm.amenity}
-                          onChange={(e) => setAmenitiesForm({...amenitiesForm, amenity: e.target.value})}
+                          onChange={(e) =>
+                            setAmenitiesForm({
+                              ...amenitiesForm,
+                              amenity: e.target.value,
+                            })
+                          }
                           placeholder="Enter amenity name"
                           maxLength={100}
                           required
                         />
                       </div>
-                      
-                      <div className="space-y-2">
+
+                      {/* <div className="space-y-2">
                         <Label htmlFor="property_amenity">Property ID</Label>
                         <Input
                           id="property_amenity"
                           type="number"
                           value={amenitiesForm.property}
-                          onChange={(e) => setAmenitiesForm({...amenitiesForm, property: parseInt(e.target.value)})}
+                          onChange={(e) =>
+                            setAmenitiesForm({
+                              ...amenitiesForm,
+                              property: parseInt(e.target.value),
+                            })
+                          }
                           required
                         />
-                      </div>
-                      
+                      </div> */}
+
                       <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={() => setIsAmenitiesDialogOpen(false)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsAmenitiesDialogOpen(false)}
+                        >
                           Cancel
                         </Button>
                         <Button type="submit">Add Amenity</Button>
@@ -3197,7 +3579,6 @@ const PropertyDetail = () => {
                     </form>
                   </DialogContent>
                 </Dialog>
-                
               </CardContent>
             </Card>
             <Card>
@@ -3208,25 +3589,28 @@ const PropertyDetail = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Input 
-                  placeholder="Your Name" 
+                <Input
+                  placeholder="Your Name"
                   value={bestDealForm.name}
-                  onChange={(e) => setBestDealForm({...bestDealForm, name: e.target.value})}
+                  onChange={(e) =>
+                    setBestDealForm({ ...bestDealForm, name: e.target.value })
+                  }
                 />
-                <Input 
-                  placeholder="Phone Number" 
+                <Input
+                  placeholder="Phone Number"
                   value={bestDealForm.phone}
-                  onChange={(e) => setBestDealForm({...bestDealForm, phone: e.target.value})}
+                  onChange={(e) =>
+                    setBestDealForm({ ...bestDealForm, phone: e.target.value })
+                  }
                 />
-                <Input 
-                  placeholder="Email Address" 
+                <Input
+                  placeholder="Email Address"
                   value={bestDealForm.email}
-                  onChange={(e) => setBestDealForm({...bestDealForm, email: e.target.value})}
+                  onChange={(e) =>
+                    setBestDealForm({ ...bestDealForm, email: e.target.value })
+                  }
                 />
-                <Button
-                  className="w-full"
-                  onClick={handleGetBestDeal}
-                >
+                <Button className="w-full" onClick={handleGetBestDeal}>
                   <Phone className="h-4 w-4 mr-2" />
                   Get Call Back
                 </Button>
@@ -3399,3 +3783,6 @@ const PropertyDetail = () => {
 };
 
 export default PropertyDetail;
+
+
+

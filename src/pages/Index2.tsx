@@ -51,179 +51,6 @@ import { PropertyCard } from "./PropertyCard";
 import { NewLaunchesCarousel } from "./NewLaunchesCarousel";
 import { useNavigate } from "react-router-dom";
 
-const sampleProperties = [
-  {
-    id: "1",
-    image: " ",
-    title: "Luxury Skyline Apartments",
-    builder: "DLF Limited",
-    location: "Sector 54, Gurgaon",
-    bhkOptions: [
-      { bhk: "2 BHK", price: "90 L" },
-      { bhk: "3 BHK", price: "1.2 Cr" },
-    ],
-    description:
-      "Premium apartments with modern amenities and excellent connectivity to business districts. Features include clubhouse, swimming pool, and 24/7 security.",
-    badges: ["Zero Brokerage", "RERA Approved"],
-    ribbon: "Ready to Move – Dec 2024",
-    amenities: ["Parking", "Security", "Wifi", "Camera"],
-  },
-  {
-    id: "2",
-    image: " ",
-    title: "Emerald Villa Estates",
-    builder: "Prestige Group",
-    location: "Whitefield, Bangalore",
-    bhkOptions: [
-      { bhk: "3 BHK Villa", price: "1.8 Cr" },
-      { bhk: "4 BHK Villa", price: "2.5 Cr" },
-    ],
-    description:
-      "Luxurious independent villas with private gardens and premium finishes. Located in the heart of Bangalore's IT corridor with excellent schools nearby.",
-    badges: ["New Booking", "Premium Location"],
-    ribbon: "Completion in 2025",
-    amenities: ["Parking", "Security", "Camera"],
-  },
-  {
-    id: "3",
-    image: " ",
-    title: "Metro Heights Residency",
-    builder: "Godrej Properties",
-    location: "Dwarka, Delhi",
-    bhkOptions: [
-      { bhk: "1 BHK", price: "75 L" },
-      { bhk: "2 BHK", price: "95 L" },
-      { bhk: "3 BHK", price: "1.4 Cr" },
-    ],
-    description:
-      "Modern high-rise apartments with metro connectivity. Features state-of-the-art amenities and green building certification.",
-    badges: ["Metro Connected", "Green Building"],
-    ribbon: "Ready to Move – Aug 2024",
-    amenities: ["Parking", "Wifi", "Security"],
-  },
-  {
-    id: "4",
-    image: " ",
-    title: "Tech Hub Commercial Plaza",
-    builder: "Tata Housing",
-    location: "Hinjewadi, Pune",
-    bhkOptions: [
-      { bhk: "Office Space", price: "65 L" },
-      { bhk: "Retail Shop", price: "45 L" },
-    ],
-    description:
-      "Premium commercial spaces in Pune's leading IT hub. Perfect for businesses looking for modern infrastructure and connectivity.",
-    badges: ["Commercial", "IT Hub Location"],
-    ribbon: "Ready for Possession – Sep 2024",
-    amenities: ["Parking", "Security", "Wifi"],
-  },
-];
-
-const featuredProperties = [
-  {
-    id: "5",
-    image: " ",
-    title: "Royal Garden Residency",
-    builder: "Lodha Group",
-    location: "Palava City, Mumbai",
-    bhkOptions: [
-      { bhk: "2 BHK", price: "1.1 Cr" },
-      { bhk: "3 BHK", price: "1.6 Cr" },
-    ],
-    description:
-      "Award-winning residential project with world-class amenities and sustainable living features in India's first smart city.",
-    badges: ["Featured", "Smart City"],
-    ribbon: "Limited Units Available",
-    amenities: ["Parking", "Security", "Wifi", "Camera"],
-  },
-  {
-    id: "6",
-    image: " ",
-    title: "Infinity Sky Towers",
-    builder: "Brigade Group",
-    location: "Electronic City, Bangalore",
-    bhkOptions: [
-      { bhk: "3 BHK", price: "1.8 Cr" },
-      { bhk: "4 BHK", price: "2.4 Cr" },
-    ],
-    description:
-      "Luxury high-rise apartments with panoramic city views and premium clubhouse facilities in Bangalore's IT hub.",
-    badges: ["Featured", "High Rise"],
-    ribbon: "Possession by Mar 2025",
-    amenities: ["Parking", "Security", "Wifi"],
-  },
-];
-
-const readyToMoveProperties = [
-  {
-    id: "7",
-    image: " ",
-    title: "Green Valley Apartments",
-    builder: "Mahindra Lifespace",
-    location: "Kandivali West, Mumbai",
-    bhkOptions: [
-      { bhk: "2 BHK", price: "85 L" },
-      { bhk: "3 BHK", price: "1.2 Cr" },
-    ],
-    description:
-      "Eco-friendly apartments with lush green surroundings and excellent connectivity to Western Express Highway.",
-    badges: ["Ready to Move", "Eco-Friendly"],
-    ribbon: "Immediate Possession Available",
-    amenities: ["Parking", "Security", "Camera"],
-  },
-  {
-    id: "8",
-    image: " ",
-    title: "Urban Square Complex",
-    builder: "Puravankara Limited",
-    location: "Noida Extension, Delhi NCR",
-    bhkOptions: [
-      { bhk: "2 BHK", price: "78 L" },
-      { bhk: "3 BHK", price: "1.1 Cr" },
-    ],
-    description:
-      "Modern residential complex with shopping mall, food court and entertainment facilities within the premises.",
-    badges: ["Ready to Move", "Integrated Complex"],
-    ribbon: "Keys Ready - Move in Today",
-    amenities: ["Parking", "Wifi", "Security"],
-  },
-];
-
-const premiumProjects = [
-  {
-    id: "9",
-    image: " ",
-    title: "Platinum Heights",
-    builder: "Oberoi Realty",
-    location: "Worli, Mumbai",
-    bhkOptions: [
-      { bhk: "3 BHK", price: "4.5 Cr" },
-      { bhk: "4 BHK", price: "6.8 Cr" },
-    ],
-    description:
-      "Ultra-luxury residences with private elevators, concierge services and breathtaking views of Arabian Sea.",
-    badges: ["Premium", "Sea View"],
-    ribbon: "Ultra-Luxury Collection",
-    amenities: ["Parking", "Security", "Wifi", "Camera"],
-  },
-  {
-    id: "10",
-    image: " ",
-    title: "Diamond District Villas",
-    builder: "Hiranandani Group",
-    location: "Powai, Mumbai",
-    bhkOptions: [
-      { bhk: "4 BHK Villa", price: "5.2 Cr" },
-      { bhk: "5 BHK Villa", price: "7.5 Cr" },
-    ],
-    description:
-      "Exclusive collection of luxury villas with private gardens, swimming pools and premium security in gated community.",
-    badges: ["Premium", "Gated Community"],
-    ribbon: "Exclusive Launch - Limited Edition",
-    amenities: ["Parking", "Security", "Camera"],
-  },
-];
-
 export const Index2 = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -245,48 +72,65 @@ export const Index2 = () => {
 
     // Filter by search query
     if (filters.searchQuery) {
-      filtered = filtered.filter(property => 
-        property.title?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-        property.location?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-        property.address?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-        property.description?.toLowerCase().includes(filters.searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (property) =>
+          property.title
+            ?.toLowerCase()
+            .includes(filters.searchQuery.toLowerCase()) ||
+          property.location
+            ?.toLowerCase()
+            .includes(filters.searchQuery.toLowerCase()) ||
+          property.address
+            ?.toLowerCase()
+            .includes(filters.searchQuery.toLowerCase()) ||
+          property.description
+            ?.toLowerCase()
+            .includes(filters.searchQuery.toLowerCase())
       );
     }
 
     // Filter by property type
     if (filters.propertyTypes.length > 0) {
-      filtered = filtered.filter(property => {
-        const propertyTitle = property.title?.toLowerCase() || '';
-        const propertyDescription = property.description?.toLowerCase() || '';
-        
-        return filters.propertyTypes.some(type => 
-          propertyTitle.includes(type.toLowerCase()) ||
-          propertyDescription.includes(type.toLowerCase()) ||
-          (type.toLowerCase() === 'apartment' && (propertyTitle.includes('apartment') || propertyTitle.includes('flat'))) ||
-          (type.toLowerCase() === 'villa' && propertyTitle.includes('villa')) ||
-          (type.toLowerCase() === 'house' && propertyTitle.includes('house')) ||
-          (type.toLowerCase() === 'commercial' && propertyTitle.includes('commercial'))
+      filtered = filtered.filter((property) => {
+        const propertyTitle = property.title?.toLowerCase() || "";
+        const propertyDescription = property.description?.toLowerCase() || "";
+
+        return filters.propertyTypes.some(
+          (type) =>
+            propertyTitle.includes(type.toLowerCase()) ||
+            propertyDescription.includes(type.toLowerCase()) ||
+            (type.toLowerCase() === "apartment" &&
+              (propertyTitle.includes("apartment") ||
+                propertyTitle.includes("flat"))) ||
+            (type.toLowerCase() === "villa" &&
+              propertyTitle.includes("villa")) ||
+            (type.toLowerCase() === "house" &&
+              propertyTitle.includes("house")) ||
+            (type.toLowerCase() === "commercial" &&
+              propertyTitle.includes("commercial"))
         );
       });
     }
 
     // Filter by location
     if (filters.locations.length > 0) {
-      filtered = filtered.filter(property => {
-        const propertyLocation = property.location || property.address || '';
-        return filters.locations.some(location => 
-          propertyLocation.toLowerCase().includes(location.toLowerCase()) ||
-          property.title?.toLowerCase().includes(location.toLowerCase())
+      filtered = filtered.filter((property) => {
+        const propertyLocation = property.location || property.address || "";
+        return filters.locations.some(
+          (location) =>
+            propertyLocation.toLowerCase().includes(location.toLowerCase()) ||
+            property.title?.toLowerCase().includes(location.toLowerCase())
         );
       });
     }
 
     // Filter by BHK
     if (filters.bhkOptions.length > 0) {
-      filtered = filtered.filter(property => 
-        filters.bhkOptions.some(bhk => 
-          property.bedrooms?.toString() === bhk.replace(/[^0-9]/g, '') ||
-          property.bhkOptions?.some(option => option.bhk?.includes(bhk))
+      filtered = filtered.filter((property) =>
+        filters.bhkOptions.some(
+          (bhk) =>
+            property.bedrooms?.toString() === bhk.replace(/[^0-9]/g, "") ||
+            property.bhkOptions?.some((option) => option.bhk?.includes(bhk))
         )
       );
     }
@@ -294,20 +138,22 @@ export const Index2 = () => {
     // Filter by price range (convert lakhs to actual price)
     const minPrice = filters.priceRange[0] * 100000;
     const maxPrice = filters.priceRange[1] * 100000;
-    
-    filtered = filtered.filter(property => {
+
+    filtered = filtered.filter((property) => {
       const price = parseFloat(property.price) || 0;
       return price >= minPrice && price <= maxPrice;
     });
 
     // Filter by amenities
     if (filters.amenities.length > 0) {
-      filtered = filtered.filter(property => 
-        filters.amenities.some(amenity => 
-          (property.amenities || []).some(propAmenity => 
-            typeof propAmenity === 'string' 
+      filtered = filtered.filter((property) =>
+        filters.amenities.some((amenity) =>
+          (property.amenities || []).some((propAmenity) =>
+            typeof propAmenity === "string"
               ? propAmenity.includes(amenity)
-              : (propAmenity.amenity || propAmenity.name || '').includes(amenity)
+              : (propAmenity.amenity || propAmenity.name || "").includes(
+                  amenity
+                )
           )
         )
       );
@@ -462,7 +308,10 @@ export const Index2 = () => {
 
   // Create a centralized API helper function
 
-  const makeAuthenticatedRequest = async (url, options = {}) => {
+  const makeAuthenticatedRequest = async (
+    url: string,
+    options: RequestInit = {}
+  ) => {
     const token = localStorage.getItem("access_token");
 
     if (!token) {
@@ -475,12 +324,12 @@ export const Index2 = () => {
       Accept: "application/json",
     };
 
-    const requestOptions = {
+    const requestOptions: RequestInit = {
       method: "GET",
       ...options,
       headers: {
         ...defaultHeaders,
-        ...options.headers
+        ...(options.headers || {}),
       },
     };
 
@@ -491,177 +340,178 @@ export const Index2 = () => {
   };
 
   // Update your fetchProperties function
-const fetchProperties = async (search = "", type = "") => {
-  setLoading(true);
-  try {
-    const queryParams = new URLSearchParams();
-    if (search?.trim()) queryParams.append("search", search.trim());
-    if (type && type !== "all" && type !== "") {
-      queryParams.append("property_type", type);
-    }
+  const fetchProperties = async (search = "", type = "") => {
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+      if (search?.trim()) queryParams.append("search", search.trim());
+      if (type && type !== "all" && type !== "") {
+        queryParams.append("property_type", type);
+      }
 
-    const url = `http://127.0.0.1:8000/api/properties/?${queryParams}`;
-    console.log("🌐 API URL:", url);
-    
-    const response = await makeAuthenticatedRequest(url);
-    
-    if (response.ok) {
-      const data = await response.json();
-      const propertiesArray = Array.isArray(data) ? data : data.results || [];
-      console.log("📊 Properties received:", propertiesArray.length);
-      setProperties(propertiesArray);
-      setFilteredProperties(propertiesArray); // Initialize filtered properties
-    } else {
-      console.error("❌ API Error:", response.status);
+      const url = `http://127.0.0.1:8000/api/properties/?${queryParams}`;
+      console.log("🌐 API URL:", url);
+
+      const response = await makeAuthenticatedRequest(url);
+
+      if (response.ok) {
+        const data = await response.json();
+        const propertiesArray = Array.isArray(data) ? data : data.results || [];
+        console.log("📊 Properties received:", propertiesArray.length);
+        setProperties(propertiesArray);
+        setFilteredProperties(propertiesArray); // Initialize filtered properties
+      } else {
+        console.error("❌ API Error:", response.status);
+        setProperties([]);
+        setFilteredProperties([]);
+      }
+    } catch (error) {
+      console.error("Error:", error);
       setProperties([]);
       setFilteredProperties([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error:", error);
-    setProperties([]);
-    setFilteredProperties([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  const fetchPropertiesAPIFiltered = async (
+    search = "",
+    type: number | string = ""
+  ) => {
+    console.log("🔍 Search parameters:", { search, type });
+    setLoading(true);
 
+    try {
+      const queryParams = new URLSearchParams();
 
-
-
-
-const fetchPropertiesAPIFiltered = async (search = "", type: number | string = "") => {
-  console.log("🔍 Search parameters:", { search, type });
-  setLoading(true);
-
-  try {
-    const queryParams = new URLSearchParams();
-
-    if (search && search.trim()) {
-      queryParams.append("search", search.trim());
-    }
-
-    if (type && type !== "" && type !== "all") {
-      queryParams.append("property_type", type.toString());
-    }
-
-    const url = `http://127.0.0.1:8000/api/properties/${
-      queryParams.toString() ? "?" + queryParams.toString() : ""
-    }`;
-
-    console.log("🌐 API URL:", url);
-
-    const response = await makeAuthenticatedRequest(url);
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log("📊 API Response:", data);
-
-      // Extract properties array
-      let propertiesArray = [];
-      if (Array.isArray(data)) {
-        propertiesArray = data;
-      } else if (data.results) {
-        propertiesArray = data.results;
-      } else if (data.data) {
-        propertiesArray = data.data;
+      if (search && search.trim()) {
+        queryParams.append("search", search.trim());
       }
 
-      console.log("🏠 Properties to display:", propertiesArray);
+      if (type && type !== "" && type !== "all") {
+        queryParams.append("property_type", type.toString());
+      }
 
-      // Trust the API completely - no client-side filtering
-      setProperties(propertiesArray);
+      const url = `http://127.0.0.1:8000/api/properties/${
+        queryParams.toString() ? "?" + queryParams.toString() : ""
+      }`;
 
-      toast({
-        title: "Search Results",
-        description: `Found ${propertiesArray.length} properties`,
-      });
-    } else {
-      console.error("❌ API Error - Status:", response.status);
-      const errorText = await response.text();
-      console.error("❌ Error details:", errorText);
+      console.log("🌐 API URL:", url);
+
+      const response = await makeAuthenticatedRequest(url);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("📊 API Response:", data);
+
+        // Extract properties array
+        let propertiesArray = [];
+        if (Array.isArray(data)) {
+          propertiesArray = data;
+        } else if (data.results) {
+          propertiesArray = data.results;
+        } else if (data.data) {
+          propertiesArray = data.data;
+        }
+
+        console.log("🏠 Properties to display:", propertiesArray);
+
+        // Trust the API completely - no client-side filtering
+        setProperties(propertiesArray);
+
+        toast({
+          title: "Search Results",
+          description: `Found ${propertiesArray.length} properties`,
+        });
+      } else {
+        console.error("❌ API Error - Status:", response.status);
+        const errorText = await response.text();
+        console.error("❌ Error details:", errorText);
+        setProperties([]);
+
+        toast({
+          title: "Search Error",
+          description: "Failed to fetch properties. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("💥 Network Error:", error);
       setProperties([]);
-      
+
       toast({
-        title: "Search Error",
-        description: "Failed to fetch properties. Please try again.",
+        title: "Network Error",
+        description: "Unable to connect to server.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("💥 Network Error:", error);
-    setProperties([]);
-    
-    toast({
-      title: "Network Error",
-      description: "Unable to connect to server.",
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const fetchPropertiesSimplified = async (search = "", type: number | string = "") => {
-  console.log("🔍 Search parameters:", { search, type });
-  setLoading(true);
+  const fetchPropertiesSimplified = async (
+    search = "",
+    type: number | string = ""
+  ) => {
+    console.log("🔍 Search parameters:", { search, type });
+    setLoading(true);
 
-  try {
-    const queryParams = new URLSearchParams();
+    try {
+      const queryParams = new URLSearchParams();
 
-    if (search && search.trim()) {
-      queryParams.append("search", search.trim());
-    }
-
-    if (type && type !== "" && type !== "all") {
-      queryParams.append("property_type", type.toString());
-    }
-
-    const url = `http://127.0.0.1:8000/api/properties/${
-      queryParams.toString() ? "?" + queryParams.toString() : ""
-    }`;
-
-    // console.log("🌐 API URL:", url);
-
-    const response = await makeAuthenticatedRequest(url);
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log("📊 Complete API Response:", data);
-
-      // Extract properties array
-      let propertiesArray = [];
-      if (Array.isArray(data)) {
-        propertiesArray = data;
-      } else if (data.results) {
-        propertiesArray = data.results;
-      } else if (data.data) {
-        propertiesArray = data.data;
+      if (search && search.trim()) {
+        queryParams.append("search", search.trim());
       }
 
-      console.log("🏠 Final properties to display:", propertiesArray);
-      console.log("📈 Properties count:", propertiesArray.length);
+      if (type && type !== "" && type !== "all") {
+        queryParams.append("property_type", type.toString());
+      }
 
-      // Trust the API - no client-side filtering
-      setProperties(propertiesArray);
+      const url = `http://127.0.0.1:8000/api/properties/${
+        queryParams.toString() ? "?" + queryParams.toString() : ""
+      }`;
 
-      toast({
-        title: "Search Results",
-        description: `Found ${propertiesArray.length} properties`,
-      });
-    } else {
-      console.error("❌ API Error - Status:", response.status);
-      const errorText = await response.text();
-      console.error("❌ Error details:", errorText);
+      // console.log("🌐 API URL:", url);
+
+      const response = await makeAuthenticatedRequest(url);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("📊 Complete API Response:", data);
+
+        // Extract properties array
+        let propertiesArray = [];
+        if (Array.isArray(data)) {
+          propertiesArray = data;
+        } else if (data.results) {
+          propertiesArray = data.results;
+        } else if (data.data) {
+          propertiesArray = data.data;
+        }
+
+        console.log("🏠 Final properties to display:", propertiesArray);
+        console.log("📈 Properties count:", propertiesArray.length);
+
+        // Trust the API - no client-side filtering
+        setProperties(propertiesArray);
+
+        toast({
+          title: "Search Results",
+          description: `Found ${propertiesArray.length} properties`,
+        });
+      } else {
+        console.error("❌ API Error - Status:", response.status);
+        const errorText = await response.text();
+        console.error("❌ Error details:", errorText);
+        setProperties([]);
+      }
+    } catch (error) {
+      console.error("💥 Network Error:", error);
       setProperties([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("💥 Network Error:", error);
-    setProperties([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleWishlistToggle = (propertyId: string) => {
     setWishlistedProperties((prev) =>
@@ -743,7 +593,7 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
         ? ""
         : parseInt(propertyType, 10);
 
-    fetchProperties(searchTerm, apiValue).finally(() => {
+    fetchProperties(searchTerm, apiValue.toString()).finally(() => {
       setSearchLoading(false);
     });
   };
@@ -768,10 +618,6 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
     throw new Error("Function not implemented.");
   }
 
-
-
-    
-
   const getuserdata = async () => {
     const token = localStorage.getItem("access_token");
     const url = "http://127.0.0.1:8000/api/properties/";
@@ -782,8 +628,10 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
         },
       });
       const propertiesData = await response.json();
-      const propertiesArray = Array.isArray(propertiesData) ? propertiesData : [];
-      
+      const propertiesArray = Array.isArray(propertiesData)
+        ? propertiesData
+        : [];
+
       // Fetch amenities for each property
       const propertiesWithAmenities = await Promise.all(
         propertiesArray.map(async (property) => {
@@ -797,29 +645,43 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
               }
             );
             const amenitiesData = await amenitiesResponse.json();
-            const amenitiesArray = Array.isArray(amenitiesData) ? amenitiesData : [];
-            
+            const amenitiesArray = Array.isArray(amenitiesData)
+              ? amenitiesData
+              : [];
+
             return {
               ...property,
-              amenities: [...new Set(amenitiesArray.map(amenity => 
-                typeof amenity === 'string' ? amenity : amenity.amenity || amenity.name || 'Unknown'
-              ))]
+              amenities: [
+                ...new Set(
+                  amenitiesArray.map((amenity) =>
+                    typeof amenity === "string"
+                      ? amenity
+                      : amenity.amenity || amenity.name || "Unknown"
+                  )
+                ),
+              ],
             };
           } catch (error) {
-            console.error(`Failed to fetch amenities for property ${property.id}:`, error);
+            console.error(
+              `Failed to fetch amenities for property ${property.id}:`,
+              error
+            );
             return {
               ...property,
-              amenities: []
+              amenities: [],
             };
           }
         })
       );
-      
+
       setProperties(propertiesWithAmenities);
       setFilteredProperties(propertiesWithAmenities); // Initialize filtered properties
       console.log("Properties with amenities:", propertiesWithAmenities);
       if (propertiesWithAmenities.length > 0) {
-        console.log("First property amenities:", propertiesWithAmenities[0].amenities);
+        console.log(
+          "First property amenities:",
+          propertiesWithAmenities[0].amenities
+        );
       }
     } catch (error) {
       console.error("Error fetching properties:", error);
@@ -830,11 +692,10 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
   useEffect(() => {
     getuserdata();
     getanimities();
-
   }, []);
 
-    const [getaminitie,setgetaminitie]=useState<any[]>([])
-    const getanimities = async () => {
+  const [getaminitie, setgetaminitie] = useState<any[]>([]);
+  const getanimities = async () => {
     const token = localStorage.getItem("access_token");
     const url = "http://127.0.0.1:8000/api/property-amenities/";
     let response = await fetch(url, {
@@ -846,10 +707,6 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
     setgetaminitie(Array.isArray(response) ? response : []);
     // console.log("aminities:",response);
   };
-
-
-
-
 
   return (
     <>
@@ -980,7 +837,7 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
                   <div className="px-6">
-                    <FilterSidebar 
+                    <FilterSidebar
                       onFilterChange={handleFilterChange}
                       properties={properties}
                     />
@@ -995,7 +852,7 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
           <div className="flex gap-6">
             {/* Desktop Sidebar */}
             <aside className="hidden md:block w-80 flex-shrink-0">
-              <FilterSidebar 
+              <FilterSidebar
                 onFilterChange={handleFilterChange}
                 properties={properties}
               />
@@ -1011,7 +868,11 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                     <p className="text-muted-foreground">
                       {loading
                         ? "Loading..."
-                        : `${filteredProperties.length > 0 ? filteredProperties.length : properties.length} properties found`}
+                        : `${
+                            filteredProperties.length > 0
+                              ? filteredProperties.length
+                              : properties.length
+                          } properties found`}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
@@ -1076,12 +937,23 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {(filteredProperties.length > 0 ? filteredProperties : properties).length > 0 ? (
-                      (filteredProperties.length > 0 ? filteredProperties : properties).map((property) => (
+                    {(filteredProperties.length > 0
+                      ? filteredProperties
+                      : properties
+                    ).length > 0 ? (
+                      (filteredProperties.length > 0
+                        ? filteredProperties
+                        : properties
+                      ).map((property) => (
                         <PropertyCard
                           key={property.id}
                           id={property.id.toString()}
-                          image={property.cover_image || ""}
+                          image={
+                            property.images?.find((img: any) => img.is_primary)
+                              ?.image ||
+                            property.images?.[0]?.image ||
+                            ""
+                          }
                           title={property.title || property.name}
                           builder={property.builder || "N/A"}
                           location={property.location || property.address}
@@ -1096,7 +968,7 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                           isWishlisted={wishlistedProperties.includes(
                             property.id.toString()
                           )}
-                          onWishlistToggle={handleWishlistToggle} 
+                          onWishlistToggle={handleWishlistToggle}
                         />
                       ))
                     ) : (
@@ -1120,101 +992,6 @@ const fetchPropertiesSimplified = async (search = "", type: number | string = ""
                     )}
                   </div>
                 )}
-              </div>
-
-              {/* Sample Properties Section */}
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">
-                    Featured Listings
-                    <span className="text-sm text-muted-foreground font-normal ml-2">
-                      ({sampleProperties.length} properties)
-                    </span>
-                  </h2>
-                </div>
-
-                <div className="space-y-6">
-                  {sampleProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      {...property}
-                      isWishlisted={wishlistedProperties.includes(property.id)}
-                      onWishlistToggle={handleWishlistToggle}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* New Launches Carousel */}
-              <NewLaunchesCarousel />
-
-              {/* Featured Properties Section */}
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">
-                    Featured Properties
-                    <span className="text-sm text-muted-foreground font-normal ml-2">
-                      ({featuredProperties.length} featured properties)
-                    </span>
-                  </h2>
-                </div>
-
-                <div className="space-y-6">
-                  {featuredProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      {...property}
-                      isWishlisted={wishlistedProperties.includes(property.id)}
-                      onWishlistToggle={handleWishlistToggle}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Ready to Move Properties Section */}
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">
-                    Ready to Move Properties
-                    <span className="text-sm text-muted-foreground font-normal ml-2">
-                      ({readyToMoveProperties.length} ready properties)
-                    </span>
-                  </h2>
-                </div>
-
-                <div className="space-y-6">
-                  {readyToMoveProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      {...property}
-                      isWishlisted={wishlistedProperties.includes(property.id)}
-                      onWishlistToggle={handleWishlistToggle}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Premium Projects Section */}
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">
-                    Premium Projects
-                    <span className="text-sm text-muted-foreground font-normal ml-2">
-                      ({premiumProjects.length} premium projects)
-                    </span>
-                  </h2>
-                </div>
-
-                <div className="space-y-6">
-                  {premiumProjects.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      {...property}
-                      isWishlisted={wishlistedProperties.includes(property.id)}
-                      onWishlistToggle={handleWishlistToggle}
-                    />
-                  ))}
-                </div>
               </div>
 
               {/* Pagination */}

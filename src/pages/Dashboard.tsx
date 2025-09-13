@@ -83,7 +83,11 @@ const Dashboard = () => {
     });
     if (response.ok) {
       const data = await response.json();
-      setProperties(data);
+      if (data && data.results && Array.isArray(data.results)) {
+        setProperties(data.results);
+      } else if (Array.isArray(data)) {
+        setProperties(data);
+      }
     }
   };
 
@@ -343,8 +347,8 @@ const Dashboard = () => {
 
   const [noticeData, setnoticeData] = useState([]);
   const [noticeDataEditMode, setnoticeEditDataMode] = useState(false);
-  const [noticeOpen, setnoticeOpen] = useState(null);
-  const [SelectedNotice, setSelectedNotice] = useState(false);
+  const [noticeOpen, setnoticeOpen] = useState(false);
+  const [SelectedNotice, setSelectedNotice] = useState<any>(null);
   const fetchnoticeData = async () => {
     try {
       const token = localStorage.getItem("access_token");
@@ -415,7 +419,7 @@ const Dashboard = () => {
     const file = e.target.files?.[0] || null;
     setnoticeEdit((prev) => ({
       ...prev,
-      supporting_document: file, // ✅ sahi key use karo
+      supporting_document: file, 
     }));
   };
 
@@ -438,7 +442,7 @@ const Dashboard = () => {
       const response = await fetch(
         `http://127.0.0.1:8000/api/summons-notices/${slug}/`,
         {
-          method: "PATCH",
+          method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -1402,8 +1406,7 @@ const Dashboard = () => {
     </>
   );
 };
-
-export default Dashboard;
-function fetchSummonsNotice() {
-  throw new Error("Function not implemented.");
-}
+ export default Dashboard;
+// function fetchSummonsNotice() {
+//   throw new Error("Function not implemented.");
+// }

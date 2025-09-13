@@ -22,7 +22,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ToastContainer } from "react-toastify";
 import {
   Upload,
   MapPin,
@@ -48,6 +47,11 @@ const AddProperty = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<any[]>([]);
+
+  // New state for submission progress
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionProgress, setSubmissionProgress] = useState(0);
+  const [submissionMessage, setSubmissionMessage] = useState("");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -86,8 +90,18 @@ const AddProperty = () => {
   ];
 
   const amenitiesList = [
-    "Swimming Pool", "Gym", "Parking", "Garden", "Security", "Elevator",
-    "Power Backup", "Water Supply", "Internet", "Balcony", "Terrace", "Maintenance"
+    "Swimming Pool",
+    "Gym",
+    "Parking",
+    "Garden",
+    "Security",
+    "Elevator",
+    "Power Backup",
+    "Water Supply",
+    "Internet",
+    "Balcony",
+    "Terrace",
+    "Maintenance",
   ];
 
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
@@ -105,14 +119,15 @@ const AddProperty = () => {
       setUploadedDocuments((prev) => [...prev, ...docArray]);
     }
   };
+
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files);
-      setImageFiles((prev) => [...prev, ...fileArray]); // Store actual files
+      setImageFiles((prev) => [...prev, ...fileArray]);
 
-      // Also create preview URLs
       fileArray.forEach((file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -137,20 +152,33 @@ const AddProperty = () => {
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
+    if (imageFiles.length === 0) {
+      toast.error("Please upload at least one image");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmissionProgress(0);
+
     try {
       const token = localStorage.getItem("access_token");
-
       if (!token) {
         toast.error("Authentication Error");
+        setIsSubmitting(false);
         return;
       }
 
-      if (imageFiles.length === 0) {
-        toast.error("Please upload at least one image");
-        return;
-      }
+      const totalSteps =
+        1 +
+        (imageFiles.length > 0 ? 1 : 0) +
+        (formData.amenities.length > 0 ? 1 : 0) +
+        (documentFiles.length > 0 ? 1 : 0);
+      let completedSteps = 0;
 
-      // Calculate price_per_sqft if not provided
+      // Step 1: Create Property
+      setSubmissionMessage("Creating property listing...");
+      setSubmissionProgress(++completedSteps / totalSteps * 100);
+
       const pricePerSqft =
         formData.price_per_sqft ||
         (formData.price && formData.area_sqft
@@ -160,33 +188,15 @@ const AddProperty = () => {
           : "0");
 
       const formDataToSend = new FormData();
-
-      // Append all form data
       Object.keys(formData).forEach((key) => {
-        if (key === "amenities") {
-          // Append amenities as a comma-separated string
-          formDataToSend.append(key, formData.amenities.join(','));
-        } else if (key === "rera_approved") {
-          formDataToSend.append(key, formData[key] ? "true" : "false");
-        } else if (key === "price_per_sqft") {
-          // Use calculated value if not provided
-          formDataToSend.append(key, pricePerSqft);
-        } else if (key === "maintenance_cost" && !formData[key]) {
-          // Default maintenance cost if not provided
-          formDataToSend.append(key, "0");
-        } else if (formData[key]) {
-          formDataToSend.append(key, formData[key]);
+        if (key !== "amenities" && formData[key]) {
+            const value = key === 'rera_approved' ? (formData[key] ? 'true' : 'false') : formData[key];
+            formDataToSend.append(key, value as string);
         }
       });
-
-      if (imageFiles[0]) {
-        formDataToSend.append("cover_image", imageFiles[0]);
-      }
-
-      // Debug: Log FormData contents
-      console.log("FormData contents:");
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(key, value);
+      formDataToSend.set("price_per_sqft", pricePerSqft);
+      if (!formData.maintenance_cost) {
+        formDataToSend.set("maintenance_cost", "0");
       }
 
       const propertyResponse = await axios.post(
@@ -199,16 +209,77 @@ const AddProperty = () => {
           },
         }
       );
+      const propertySlug = propertyResponse.data.slug;
 
-      console.log("Property created successfully:", propertyResponse.data);
-      const propertyId = propertyResponse.data.id;
+      // Step 2: Upload Images
+      if (imageFiles.length > 0) {
+        setSubmissionMessage(`Uploading ${imageFiles.length} images...`);
+        setSubmissionProgress(++completedSteps / totalSteps * 100);
+        for (let i = 0; i < imageFiles.length; i++) {
+          const imageFormData = new FormData();
+          imageFormData.append("property_slug", propertySlug);
+          imageFormData.append("image", imageFiles[i]);
+          imageFormData.append("is_primary", i === 0 ? "true" : "false");
+          imageFormData.append("caption", `Image ${i + 1}`);
+          await axios.post(
+            "http://127.0.0.1:8000/api/property-images/",
+            imageFormData,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+      }
 
-      // You can handle post-submit logic here (e.g., navigation, toast, etc.)
-      toast.success("Property created successfully!");
-      navigate(`/property/${propertyId}`);
+      // Step 3: Upload Amenities
+      if (formData.amenities.length > 0) {
+        setSubmissionMessage(`Adding ${formData.amenities.length} amenities...`);
+        setSubmissionProgress(++completedSteps / totalSteps * 100);
+        for (const amenity of formData.amenities) {
+          await axios.post(
+            "http://127.0.0.1:8000/api/property-amenities/",
+            { property_slug: propertySlug, amenity: amenity },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+      }
+
+      // Step 4: Upload Documents
+      if (documentFiles.length > 0) {
+        setSubmissionMessage(`Uploading ${documentFiles.length} documents...`);
+        setSubmissionProgress(++completedSteps / totalSteps * 100);
+        for (let i = 0; i < documentFiles.length; i++) {
+          const docFormData = new FormData();
+          docFormData.append("property_slug", propertySlug);
+          docFormData.append("document_file", documentFiles[i]);
+          docFormData.append("document_type", `Document ${i + 1}`);
+          await axios.post(
+            "http://127.0.0.1:8000/api/property-documents/",
+            docFormData,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+      }
+
+      setSubmissionMessage("Property published successfully!");
+      setSubmissionProgress(100);
+      toast.success("Property created successfully with all media!");
+      
+      setTimeout(() => {
+        navigate(`/property/${propertySlug}`);
+      }, 1500);
+
     } catch (error: any) {
       console.error("Error creating property:", error);
-      toast.error("Failed to create property. Please try again.");
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+        toast.error(
+          `Failed to create property: ${
+            error.response.data.message || "Unknown error"
+          }`
+        );
+      } else {
+        toast.error("Failed to create property. Please try again.");
+      }
+      setIsSubmitting(false);
     }
   };
 
@@ -219,8 +290,6 @@ const AddProperty = () => {
       if (!token) {
         console.error("No authentication token found");
         toast.error("Please login to continue");
-        // Navigate to login if needed
-        // navigate('/login');
         return;
       }
 
@@ -241,8 +310,7 @@ const AddProperty = () => {
 
       if (error.response?.status === 401) {
         toast.error("Session expired. Please login again.");
-        localStorage.removeItem("access_token"); // Clear expired token
-        // navigate('/login');
+        localStorage.removeItem("access_token");
       } else if (error.response?.status === 403) {
         toast.error("Access denied. Check permissions.");
       } else if (error.response?.status >= 500) {
@@ -253,14 +321,10 @@ const AddProperty = () => {
     }
   };
 
-  // Debug localStorage token
-  // console.log("Token in localStorage:", localStorage.getItem("access_token"));
-
   useEffect(() => {
     fetchPropertyTypes();
   }, []);
 
-  // Alternative: Hardcoded fallback for testing (temporary)
   const fallbackPropertyTypes = [
     { id: 1, name: "Apartment" },
     { id: 2, name: "Villa" },
@@ -281,13 +345,32 @@ const AddProperty = () => {
   };
 
   const getSuggestedPrice = () => {
-    // Mock AI price suggestion based on area and location
-    const basePrice = parseInt(formData.area_sqft) * 25000; // ₹25k per sq ft
+    const basePrice = parseInt(formData.area_sqft) * 25000;
     return basePrice.toLocaleString();
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card p-8 rounded-lg shadow-2xl w-full max-w-md mx-4">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
+                Publishing Your Listing
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                {submissionMessage}
+              </p>
+              <Progress value={submissionProgress} className="mb-4" />
+              {submissionProgress === 100 ? (
+                <CheckCircle className="h-16 w-16 text-success mx-auto animate-pulse" />
+              ) : (
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-primary/5 border-b">
         <div className="max-w-7xl mx-auto px-6 py-8">
@@ -468,14 +551,21 @@ const AddProperty = () => {
                       </div>
 
                       <div className="md:col-span-2">
-                        <Label className="text-base font-medium">Amenities</Label>
+                        <Label className="text-base font-medium">
+                          Amenities
+                        </Label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                           {amenitiesList.map((amenity) => (
-                            <div key={amenity} className="flex items-center space-x-2">
+                            <div
+                              key={amenity}
+                              className="flex items-center space-x-2"
+                            >
                               <Checkbox
                                 id={amenity}
                                 checked={formData.amenities.includes(amenity)}
-                                onCheckedChange={() => handleAmenityChange(amenity)}
+                                onCheckedChange={() =>
+                                  handleAmenityChange(amenity)
+                                }
                               />
                               <Label htmlFor={amenity} className="font-normal">
                                 {amenity}
@@ -487,10 +577,16 @@ const AddProperty = () => {
 
                       {formData.amenities.length > 0 && (
                         <div className="md:col-span-2">
-                          <Label className="text-sm font-medium mb-2 block">Selected Amenities:</Label>
+                          <Label className="text-sm font-medium mb-2 block">
+                            Selected Amenities:
+                          </Label>
                           <div className="flex flex-wrap gap-2">
                             {formData.amenities.map((amenity) => (
-                              <Badge key={amenity} variant="secondary" className="px-3 py-1">
+                              <Badge
+                                key={amenity}
+                                variant="secondary"
+                                className="px-3 py-1"
+                              >
                                 {amenity}
                                 <Button
                                   variant="ghost"
@@ -848,21 +944,30 @@ const AddProperty = () => {
                     <div className="text-center mb-8">
                       <Camera className="h-12 w-12 mx-auto text-primary mb-4" />
                       <h2 className="text-2xl font-bold">Images & Documents</h2>
-                      <p className="text-muted-foreground">Upload high-quality photos and legal documents</p>
+                      <p className="text-muted-foreground">
+                        Upload high-quality photos and legal documents
+                      </p>
                     </div>
 
                     <Tabs defaultValue="images" className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="images">Property Images</TabsTrigger>
-                        <TabsTrigger value="documents">Legal Documents</TabsTrigger>
+                        <TabsTrigger value="images">
+                          Property Images
+                        </TabsTrigger>
+                        <TabsTrigger value="documents">
+                          Legal Documents
+                        </TabsTrigger>
                       </TabsList>
 
                       <TabsContent value="images" className="space-y-6">
                         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
                           <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-medium mb-2">Upload Property Images</h3>
+                          <h3 className="text-lg font-medium mb-2">
+                            Upload Property Images
+                          </h3>
                           <p className="text-muted-foreground mb-4">
-                            Add high-quality photos to showcase your property. First image will be the cover photo.
+                            Add high-quality photos to showcase your property.
+                            First image will be the cover photo.
                           </p>
                           <input
                             type="file"
@@ -875,19 +980,24 @@ const AddProperty = () => {
                           <Button
                             variant="outline"
                             className="cursor-pointer"
-                            onClick={() => document.getElementById('image-upload')?.click()}
+                            onClick={() =>
+                              document.getElementById("image-upload")?.click()
+                            }
                           >
                             <Upload className="mr-2 h-4 w-4" />
                             Choose Images
                           </Button>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Supported formats: JPG, PNG, WebP (Max 10 images, 5MB each)
+                            Supported formats: JPG, PNG, WebP (Max 10 images,
+                            5MB each)
                           </p>
                         </div>
 
                         {uploadedImages.length > 0 && (
                           <div>
-                            <h4 className="font-medium mb-4">Uploaded Images ({uploadedImages.length})</h4>
+                            <h4 className="font-medium mb-4">
+                              Uploaded Images ({uploadedImages.length})
+                            </h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               {uploadedImages.map((image, index) => (
                                 <div key={index} className="relative group">
@@ -897,15 +1007,21 @@ const AddProperty = () => {
                                     className="w-full h-24 object-cover rounded-lg border"
                                   />
                                   {index === 0 && (
-                                    <Badge className="absolute top-2 left-2 text-xs">Cover</Badge>
+                                    <Badge className="absolute top-2 left-2 text-xs">
+                                      Cover
+                                    </Badge>
                                   )}
                                   <Button
                                     variant="destructive"
                                     size="sm"
                                     className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={() => {
-                                      setUploadedImages(prev => prev.filter((_, i) => i !== index));
-                                      setImageFiles(prev => prev.filter((_, i) => i !== index));
+                                      setUploadedImages((prev) =>
+                                        prev.filter((_, i) => i !== index)
+                                      );
+                                      setImageFiles((prev) =>
+                                        prev.filter((_, i) => i !== index)
+                                      );
                                     }}
                                   >
                                     <X className="h-3 w-3" />
@@ -920,7 +1036,9 @@ const AddProperty = () => {
                       <TabsContent value="documents" className="space-y-6">
                         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
                           <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-medium mb-2">Upload Legal Documents</h3>
+                          <h3 className="text-lg font-medium mb-2">
+                            Upload Legal Documents
+                          </h3>
                           <p className="text-muted-foreground mb-4">
                             Upload documents like title deed, tax receipts, etc.
                           </p>
@@ -935,7 +1053,11 @@ const AddProperty = () => {
                           <Button
                             variant="outline"
                             className="cursor-pointer"
-                            onClick={() => document.getElementById('document-upload')?.click()}
+                            onClick={() =>
+                              document
+                                .getElementById("document-upload")
+                                ?.click()
+                            }
                           >
                             <Upload className="mr-2 h-4 w-4" />
                             Choose Documents
@@ -947,10 +1069,15 @@ const AddProperty = () => {
 
                         {uploadedDocuments.length > 0 && (
                           <div>
-                            <h4 className="font-medium mb-4">Uploaded Documents ({uploadedDocuments.length})</h4>
+                            <h4 className="font-medium mb-4">
+                              Uploaded Documents ({uploadedDocuments.length})
+                            </h4>
                             <div className="space-y-2">
                               {uploadedDocuments.map((doc, index) => (
-                                <div key={index} className="flex items-center justify-between p-2 border rounded-lg">
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between p-2 border rounded-lg"
+                                >
                                   <div className="flex items-center space-x-2">
                                     <FileText className="h-4 w-4" />
                                     <span className="text-sm">{doc.name}</span>
@@ -960,8 +1087,12 @@ const AddProperty = () => {
                                     size="sm"
                                     className="h-6 w-6 p-0"
                                     onClick={() => {
-                                      setUploadedDocuments(prev => prev.filter((_, i) => i !== index));
-                                      setDocumentFiles(prev => prev.filter((_, i) => i !== index));
+                                      setUploadedDocuments((prev) =>
+                                        prev.filter((_, i) => i !== index)
+                                      );
+                                      setDocumentFiles((prev) =>
+                                        prev.filter((_, i) => i !== index)
+                                      );
                                     }}
                                   >
                                     <X className="h-3 w-3" />
@@ -976,10 +1107,14 @@ const AddProperty = () => {
                           <div className="flex items-start space-x-3">
                             <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
                             <div>
-                              <h4 className="font-medium text-warning">Document Verification</h4>
+                              <h4 className="font-medium text-warning">
+                                Document Verification
+                              </h4>
                               <p className="text-sm text-muted-foreground mt-1">
-                                All uploaded documents will be verified by our AI system and legal team. 
-                                This ensures authenticity and builds trust with potential buyers.
+                                All uploaded documents will be verified by our
+                                AI system and legal team. This ensures
+                                authenticity and builds trust with potential
+                                buyers.
                               </p>
                             </div>
                           </div>
