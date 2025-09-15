@@ -68,6 +68,17 @@ const VideoTours = () => {
       featured: true,
       type: "4K Tour"
     }
+    ,
+    {
+      id: 7,
+      title: "Cozy Cabin Tour",
+      location: "Aspen, CO",
+      thumbnail: "https://images.unsplash.com/photo-1505843513577-22bb7d21e455?w=600",
+      duration: "7:33",
+      views: "45.3K",
+      featured: true,
+      type: "4K Tour"
+    }
   ];
 
   return (
@@ -79,13 +90,13 @@ const VideoTours = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
           <div className="inline-block mb-6">
-            <span className="bg-gradient-hero bg-clip-text text-blue-500 text-lg font-bold tracking-wider uppercase">Immersive Experience</span>
+            <span className="bg-gradient-hero bg-clip-text text-purple-500 text-lg font-bold tracking-wider uppercase">Immersive Experience</span>
           </div>
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground leading-tight">
+          <h2 className="text-5xl md:text-5xl font-bold mb-6 text-foreground leading-tight">
             Virtual Property 
-            <span className="block bg-gradient-hero bg-clip-text text-blue-700 mt-3">Tours & Videos</span>
+            <span className="ml-3 bg-gradient-hero bg-clip-text text-purple-700 mt-3">Tours & Videos</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Experience properties like never before with our immersive virtual tours, 360° walkthroughs, and professional video showcases
           </p>
         </div>
@@ -140,7 +151,7 @@ const VideoTours = () => {
                 </div>
                 
                 <div className="flex gap-4">
-                  <Button size="lg" className="bg-gradient-hero bg-blue-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300">
+                  <Button size="lg" className="bg-gradient-hero bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300">
                     <Play className="w-5 h-5 mr-2" />
                     Watch Tour
                   </Button>
@@ -203,7 +214,7 @@ const VideoTours = () => {
                 </h3>
                 
                 <div className="flex items-center text-muted-foreground mb-4">
-                  <MapPin className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                  <MapPin className="w-4 h-4 mr-2 text-purple-500 flex-shrink-0" />
                   <span className="text-sm truncate">{video.location}</span>
                 </div>
                 
@@ -212,7 +223,7 @@ const VideoTours = () => {
                     <Eye className="w-4 h-4 mr-1" />
                     {video.views} views
                   </div>
-                  <Button size="sm" variant="ghost" className="text-blue-500 hover:bg-blue-600   hover:text-white ">
+                  <Button size="sm" variant="ghost" className="text-purple-500 hover:bg-purple-600   hover:text-white ">
                     Watch Now →
                   </Button>
                 </div>
@@ -222,17 +233,17 @@ const VideoTours = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center bg-blue-100 rounded-3xl p-12 border border-border/30">
+        <div className="text-center bg-purple-100 rounded-3xl p-12 border border-border/30">
           <h3 className="text-3xl font-bold text-foreground mb-4">Want a Custom Virtual Tour?</h3>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
             Schedule a personalized virtual tour with our expert agents and explore properties from the comfort of your home
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-gradient-hero bg-blue-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-8 py-6 text-lg">
+            <Button size="lg" className="bg-gradient-hero bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-8 py-6 text-lg">
               Schedule Virtual Tour
             </Button>
             <Button variant="outline" size="lg" className="border-border/50 hover:bg-secondary/50 px-8 py-6 text-lg">
-              Browse All Videos
+              Book a Visit
             </Button>
           </div>
         </div>

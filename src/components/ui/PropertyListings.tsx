@@ -87,11 +87,11 @@ const PropertyListings = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
           <div className="inline-block">
-            <span className="bg-gradient-hero bg-clip-text text-blue-600 text-lg font-semibold tracking-wide uppercase">Premium Collection</span>
+            <span className="bg-gradient-hero bg-clip-text text-purple-600 text-lg font-semibold tracking-wide uppercase">Premium Collection</span>
           </div>
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground leading-tight">
+          <h2 className="text-5xl md:text-5xl font-bold mb-6 text-foreground leading-tight">
             Featured 
-            <span className="block bg-gradient-hero bg-clip-text text-blue-700">Properties</span>
+            <span className="ml-3 bg-gradient-hero bg-clip-text text-purple-700">Properties</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Handpicked luxury properties with the highest appreciation potential and premium amenities
@@ -99,7 +99,7 @@ const PropertyListings = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8 bg-background p-4 rounded-lg shadow-card">
+        {/* <div className="flex flex-col md:flex-row gap-4 mb-8 bg-background p-4 rounded-lg shadow-card">
           <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
             <Select>
               <SelectTrigger>
@@ -162,7 +162,7 @@ const PropertyListings = () => {
               <List className="w-4 h-4" />
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Property Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
@@ -179,7 +179,7 @@ const PropertyListings = () => {
 
         {/* Load More */}
         <div className="text-center space-y-6">
-          <Button size="lg" className="bg-blue-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-12 py-6 text-lg">
+          <Button size="lg" className="bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-12 py-6 text-lg">
             Explore All Properties
           </Button>
           <p className="text-muted-foreground">

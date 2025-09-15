@@ -149,6 +149,21 @@ const Header = ({ isLoggeIn, setisLoggedIn }) => {
     { href: "/sitemap", title: "Sitemap", description: "Site navigation" },
   ];
 
+
+const contactLinks = [
+    { href: "/contact", title: "Whatsapp", description: "Get in touch" },
+    { href: "/contact", title: "Call", description: "24/7 support" },
+    { href: "/contact", title: "Email", description: "24/7 support" },
+    { href: "/contact", title: "Office Address", description: "Get in touch" },
+
+  ];
+const associateLinks = [
+    { href: "/contact", title: "Become a Agent", description: "Get in touch" },
+    { href: "/customer-service", title: "Become a Associate", description: "24/7 support" },
+
+  ];
+
+
   const legalLinks = [
     {
       href: "/terms",
@@ -324,6 +339,72 @@ const Header = ({ isLoggeIn, setisLoggedIn }) => {
                     ))}
                   </ul>
                 </NavigationMenuContent>
+              </NavigationMenuItem>
+               <NavigationMenuItem>
+                <NavigationMenuTrigger>Contact</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    {contactLinks.map((link) => (
+                      <li key={link.href}>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            to={link.href}
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <div className="text-sm font-medium leading-none">{link.title}</div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              {link.description}
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+               <NavigationMenuItem>
+                <NavigationMenuTrigger>Become a Associate ?</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    {associateLinks.map((link) => (
+                      <li key={link.href}>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            to={link.href}
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <div className="text-sm font-medium leading-none">{link.title}</div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              {link.description}
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+               <NavigationMenuItem>
+                <NavigationMenuTrigger>Want Property Evaluation ?</NavigationMenuTrigger>
+                {/* <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    {supportLinks.map((link) => (
+                      <li key={link.href}>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            to={link.href}
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <div className="text-sm font-medium leading-none">{link.title}</div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              {link.description}
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
+                    ))}
+                  </ul>
+                </NavigationMenuContent> */}
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>

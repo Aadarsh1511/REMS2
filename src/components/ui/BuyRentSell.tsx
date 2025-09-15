@@ -161,12 +161,12 @@ const BuyRentSell = () => {
             </h3>
             
             <div className="flex items-center text-muted-foreground mb-4">
-              <MapPin className="w-4 h-4 mr-2  text-blue-500" />
+              <MapPin className="w-4 h-4 mr-2  text-purple-500" />
               <span className="text-sm">{property.location}</span>
             </div>
             
             <div className="flex justify-between items-center mb-4">
-              <span className="text-3xl font-bold bg-gradient-hero bg-clip-text text-blue-700">
+              <span className="text-3xl font-bold bg-gradient-hero bg-clip-text text-purple-700">
                 {property.price}
               </span>
               {activeTab === "rent" && <span className="text-sm text-muted-foreground">/month</span>}
@@ -189,7 +189,7 @@ const BuyRentSell = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline" size="sm">View Details</Button>
-              <Button size="sm" className="bg-gradient-hero bg-blue-400 text-white border-0">
+              <Button size="sm" className="bg-gradient-hero bg-purple-400 text-white border-0">
                 Contact
               </Button>
             </div>
@@ -207,11 +207,11 @@ const BuyRentSell = () => {
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
+          <h2 className="text-5xl md:text-5xl font-bold mb-6 text-foreground">
             Buy, Rent, or 
-            <span className="block bg-gradient-hero bg-clip-text text-blue-700 mt-5 ">Sell Properties</span>
+            <span className="ml-3 bg-gradient-hero bg-clip-text text-purple-700 mt-5 ">Sell Properties</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Whether you're looking to buy your dream home, find the perfect rental, or sell your property, we've got you covered
           </p>
         </div>
@@ -230,7 +230,7 @@ const BuyRentSell = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-8 py-4 text-lg rounded-xl transition-all duration-300 ${
                   activeTab === tab.id 
-                    ? "bg-gradient-hero text-blue-700 shadow-glow" 
+                    ? "bg-gradient-hero text-purple-700 shadow-glow" 
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -283,7 +283,7 @@ const BuyRentSell = () => {
         {/* View More Button */}
         {(activeTab === "buy" || activeTab === "rent") && (
           <div className="text-center mt-16">
-            <Button size="lg" className="bg-gradient-hero bg-blue-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-12 py-6 text-lg">
+            <Button size="lg" className="bg-gradient-hero bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-12 py-6 text-lg">
               View All {activeTab === "buy" ? "Properties for Sale" : "Rental Properties"}
             </Button>
           </div>
