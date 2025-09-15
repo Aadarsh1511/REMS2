@@ -21,10 +21,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import villa from "../../public/villa.jpg";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { toast } from 'react-toastify';
 
 interface PropertyCardProps {
   id: string;
+  slug: string; // Add slug to the interface
   image: string;
   title: string;
   builder: string;
@@ -36,6 +37,7 @@ interface PropertyCardProps {
   amenities: string[];
   isWishlisted?: boolean;
   onWishlistToggle?: (id: string) => void;
+  isProfileView?: boolean; // New prop
   // Additional props that might come from API
   price?: string;
   bedrooms?: number;
@@ -56,6 +58,7 @@ const amenityIcons: { [key: string]: any } = {
 
 export function PropertyCard({
   id,
+  slug,
   image,
   title,
   builder,
@@ -69,6 +72,7 @@ export function PropertyCard({
   amenities = [],
   isWishlisted = false,
   onWishlistToggle,
+  isProfileView = false, // New prop with default value
   // API specific props
   price,
 
@@ -79,35 +83,9 @@ export function PropertyCard({
   featured = false,
 }: PropertyCardProps) {
   const navigate = useNavigate();
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState("grid");
-  const toggleFavorite = (propertyId: string) => {
-    setFavorites((prev) =>
-      prev.includes(propertyId)
-        ? prev.filter((id) => id !== propertyId)
-        : [...prev, propertyId]
-    );
-
-    // Call parent wishlist toggle if provided
-    if (onWishlistToggle) {
-      onWishlistToggle(propertyId);
-    }
-
-    toast({
-      title: favorites.includes(propertyId)
-        ? "Removed from Favorites"
-        : "Added to Favorites",
-      description: favorites.includes(propertyId)
-        ? "Property removed from your wishlist."
-        : "Property saved to your wishlist.",
-    });
-  };
 
   const handleContactOwner = (propertyId: string) => {
-    toast({
-      title: "Connecting to Owner",
-      description: "Opening contact options...",
-    });
+    toast.info("Connecting to Owner: Opening contact options...");
     // You could open a modal or navigate to contact page
   };
 
@@ -122,7 +100,7 @@ export function PropertyCard({
   return (
     <>
       <Card className="first-card group overflow-hidden bg-gradient-card shadow-soft hover:shadow-medium transition-all duration-300 border-border/50">
-        <div className="flex flex-col md:flex-row">
+        <div className={isProfileView ? "flex flex-col" : "flex flex-col md:flex-row"}>
           {/* Image Section */}
           <div className="relative md:w-80 h-64 md:h-auto overflow-hidden">
             <img
@@ -176,15 +154,15 @@ export function PropertyCard({
               size="icon"
               variant="ghost"
               className={`absolute top-3 right-3 w-8 h-8 backdrop-blur-sm ${
-                isWishlisted || favorites.includes(id)
+                isWishlisted
                   ? "bg-destructive/90 text-white hover:bg-destructive"
                   : "bg-background/80 hover:bg-background"
               }`}
-              onClick={() => toggleFavorite(id)}
+              onClick={() => onWishlistToggle && onWishlistToggle(id)}
             >
               <Heart
                 className={`w-4 h-4 ${
-                  isWishlisted || favorites.includes(id) ? "fill-current" : ""
+                  isWishlisted ? "fill-current" : ""
                 }`}
               />
             </Button>

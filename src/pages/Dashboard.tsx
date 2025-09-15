@@ -55,6 +55,7 @@ import { selectAllErrorBarSettings } from "recharts/types/state/selectors/axisSe
 
 const Dashboard = () => {
   const { toast } = useToast();
+
   const [visits, setVisits] = useState([]);
   const [problemReports, setProblemReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -538,6 +539,8 @@ const Dashboard = () => {
               Schedule Meeting
             </Button>
           </div>
+
+          
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1400,7 +1403,6 @@ const Dashboard = () => {
       </div>
 
       <PropertySearch
-        initialFilters={filterState}
         onFilterChange={setFilterState}
       />
     </>

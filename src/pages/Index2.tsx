@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
+import { toast } from 'react-toastify';
 import {
   Search,
   Filter,
@@ -51,14 +51,14 @@ import { PropertyCard } from "./PropertyCard";
 import { NewLaunchesCarousel } from "./NewLaunchesCarousel";
 import { useSearch } from "@/context/SearchContext";
 import { useNavigate } from "react-router-dom";
+import { getWishlist, addToWishlist, removeFromWishlist, WishlistItem } from "@/lib/api";
+import { jwtDecode } from "jwt-decode";
 
 export const Index2 = () => {
   const navigate = useNavigate();
   const { setSearchParams } = useSearch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [wishlistedProperties, setWishlistedProperties] = useState<string[]>(
-    []
-  );
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [viewMode, setViewMode] = useState("grid");
@@ -67,6 +67,22 @@ export const Index2 = () => {
   const [propertyTypes, setPropertyTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [wishlistedPropertyIds, setWishlistedPropertyIds] = useState<Set<string>>(new Set());
+
+  const getCurrentUserId = (): string | null => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      try {
+        const decoded: { user_id: string } = jwtDecode(token);
+        return decoded.user_id;
+      } catch (error) {
+        console.error("Failed to decode token:", error);
+        return null;
+      }
+    }
+    return null;
+  };
 
   // Filter properties based on FilterSidebar selections
   const handleFilterChange = (filters: any) => {
@@ -167,7 +183,7 @@ export const Index2 = () => {
   // Fetch property types on component mount
   useEffect(() => {
     fetchPropertyTypes();
-    fetchProperties(); // Initial load of all properties
+    fetchProperties("", "", 1); // Initial load of page 1
     setTimeout(() => {
       if (propertyTypes.length === 0) {
         console.log("🔄 Adding fallback property types...");
@@ -180,6 +196,18 @@ export const Index2 = () => {
         ]);
       }
     }, 3000); // Wait 3 seconds for API response
+
+    const fetchWishlistData = async () => {
+      try {
+        const wishlistData = await getWishlist();
+        setWishlist(wishlistData);
+        setWishlistedPropertyIds(new Set(wishlistData.map(item => item.property.toString())));
+      } catch (error) {
+        console.error("Failed to fetch wishlist:", error);
+      }
+    };
+
+    fetchWishlistData();
   }, []);
   useEffect(() => {
     console.log("📋 PropertyTypes State Updated:", propertyTypes);
@@ -195,11 +223,7 @@ export const Index2 = () => {
 
       if (!token) {
         console.error("❌ No access token found");
-        toast({
-          title: "Authentication Error",
-          description: "Please log in again",
-          variant: "destructive",
-        });
+        toast.error("Authentication Error: Please log in again");
         return;
       }
 
@@ -254,20 +278,13 @@ export const Index2 = () => {
 
           if (propertyTypesArray.length === 0) {
             console.warn("⚠️ Property types array is empty");
-            toast({
-              title: "No Property Types",
-              description: "No property types found in the system",
-            });
+            toast.warn("No Property Types: No property types found in the system");
           }
         } catch (parseError) {
           console.error("❌ JSON Parse Error:", parseError);
           console.error("❌ Raw response was:", rawData);
 
-          toast({
-            title: "Data Format Error",
-            description: "Invalid response format from server",
-            variant: "destructive",
-          });
+          toast.error("Data Format Error: Invalid response format from server");
         }
       } else {
         const errorText = await response.text();
@@ -278,33 +295,17 @@ export const Index2 = () => {
         });
 
         if (response.status === 401) {
-          toast({
-            title: "Authentication Failed",
-            description: "Please log in again",
-            variant: "destructive",
-          });
+          toast.error("Authentication Failed: Please log in again");
           // Redirect to login or refresh token
         } else if (response.status === 404) {
-          toast({
-            title: "API Endpoint Not Found",
-            description: "Property types endpoint not available",
-            variant: "destructive",
-          });
+          toast.error("API Endpoint Not Found: Property types endpoint not available");
         } else {
-          toast({
-            title: "Server Error",
-            description: `HTTP ${response.status}: ${response.statusText}`,
-            variant: "destructive",
-          });
+          toast.error(`Server Error: HTTP ${response.status}: ${response.statusText}`);
         }
       }
     } catch (error) {
       console.error("💥 Network/General Error:", error);
-      toast({
-        title: "Network Error",
-        description: `Failed to connect: ${error.message}`,
-        variant: "destructive",
-      });
+      toast.error(`Network Error: Failed to connect: ${error.message}`);
     }
   };
 
@@ -342,7 +343,7 @@ export const Index2 = () => {
   };
 
   // Update your fetchProperties function
-  const fetchProperties = async (search = "", type = "") => {
+  const fetchProperties = async (search = "", type = "", page = 1) => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
@@ -350,20 +351,21 @@ export const Index2 = () => {
       if (type && type !== "all" && type !== "") {
         queryParams.append("property_type", type);
       }
+      queryParams.append("page", page.toString()); // Add page number to API call
 
       const url = `http://127.0.0.1:8000/api/properties/?${queryParams}`;
-      console.log("🌐 API URL:", url);
-
+      
       const response = await makeAuthenticatedRequest(url);
 
       if (response.ok) {
         const data = await response.json();
-        const propertiesArray = Array.isArray(data) ? data : data.results || [];
-        console.log("📊 Properties received:", propertiesArray.length);
+        const propertiesArray = data.results || [];
+
         setProperties(propertiesArray);
-        setFilteredProperties(propertiesArray); // Initialize filtered properties
+        setFilteredProperties(propertiesArray);
+        setCurrentPage(page);
       } else {
-        console.error("❌ API Error:", response.status);
+        console.error(" API Error:", response.status);
         setProperties([]);
         setFilteredProperties([]);
       }
@@ -421,31 +423,20 @@ export const Index2 = () => {
         // Trust the API completely - no client-side filtering
         setProperties(propertiesArray);
 
-        toast({
-          title: "Search Results",
-          description: `Found ${propertiesArray.length} properties`,
-        });
+        toast.success(`Search Results: Found ${propertiesArray.length} properties`);
       } else {
         console.error("❌ API Error - Status:", response.status);
         const errorText = await response.text();
         console.error("❌ Error details:", errorText);
         setProperties([]);
 
-        toast({
-          title: "Search Error",
-          description: "Failed to fetch properties. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Search Error: Failed to fetch properties. Please try again.");
       }
     } catch (error) {
       console.error("💥 Network Error:", error);
       setProperties([]);
 
-      toast({
-        title: "Network Error",
-        description: "Unable to connect to server.",
-        variant: "destructive",
-      });
+      toast.error("Network Error: Unable to connect to server.");
     } finally {
       setLoading(false);
     }
@@ -497,10 +488,7 @@ export const Index2 = () => {
         // Trust the API - no client-side filtering
         setProperties(propertiesArray);
 
-        toast({
-          title: "Search Results",
-          description: `Found ${propertiesArray.length} properties`,
-        });
+        toast.success(`Search Results: Found ${propertiesArray.length} properties`);
       } else {
         console.error("❌ API Error - Status:", response.status);
         const errorText = await response.text();
@@ -515,13 +503,56 @@ export const Index2 = () => {
     }
   };
 
-  const handleWishlistToggle = (propertyId: string) => {
-    setWishlistedProperties((prev) =>
-      prev.includes(propertyId)
-        ? prev.filter((id) => id !== propertyId)
-        : [...prev, propertyId]
-    );
-  };
+   
+
+
+    const handleWishlistToggle = async (property: any) => {
+      console.log("Heart clicked for property:", property); // Log the entire property object
+      const propertyId = property.id.toString(); // Extract propertyId from the object
+      const userId = getCurrentUserId();
+      if (!userId) {
+        toast.error("Not Logged In: You need to be logged in to manage your wishlist.");
+        return;
+      }
+
+      const propertyIdNum = parseInt(propertyId, 10);
+      const isWishlisted = wishlistedPropertyIds.has(propertyId);
+
+      if (isWishlisted) {
+        const wishlistItem = wishlist.find(item => item.property === propertyIdNum);
+        if (wishlistItem) {
+          try {
+            await removeFromWishlist(wishlistItem.slug);
+            setWishlistedPropertyIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(propertyId);
+              return newSet;
+            });
+            setWishlist(prev => prev.filter(item => item.property !== propertyIdNum));
+            toast.success("Property removed from your wishlist.");
+          } catch (error) {
+            console.error("Failed to remove from wishlist:", error);
+            if (error instanceof Error) {
+              console.error("Backend Error Details:", error.message);
+            }
+            toast.error("Failed to remove property from wishlist.");
+          }
+        }
+      } else {
+        try {
+          const newWishlistItem = await addToWishlist(propertyIdNum, userId);
+          setWishlistedPropertyIds(prev => new Set(prev).add(propertyId));
+          setWishlist(prev => [...prev, newWishlistItem]);
+          toast.success("Property added to your wishlist.");
+        } catch (error) {
+          console.error("Failed to add to wishlist:", error);
+          if (error instanceof Error) {
+            console.error("Backend Error Details:", error.message);
+          }
+          toast.error("Failed to add property to wishlist.");
+        }
+      }
+    };
 
   const handleVoiceSearch = () => {
     if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
@@ -531,38 +562,24 @@ export const Index2 = () => {
       const recognition = new SpeechRecognition();
 
       recognition.onstart = () => {
-        toast({
-          title: "Voice Search Active",
-          description: "Listening... Please speak your search query.",
-        });
+        toast.info("Voice Search Active: Listening... Please speak your search query.");
       };
 
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         setSearchTerm(transcript);
-        toast({
-          title: "Voice Recognized",
-          description: `Searching for: "${transcript}"`,
-        });
+        toast.info(`Voice Recognized: Searching for: "${transcript}"`);
         // Automatically trigger search with voice input
         fetchProperties(transcript, propertyType);
       };
 
       recognition.onerror = () => {
-        toast({
-          title: "Voice Search Error",
-          description: "Please try again or use text search.",
-          variant: "destructive",
-        });
+        toast.error("Voice Search Error: Please try again or use text search.");
       };
 
       recognition.start();
     } else {
-      toast({
-        title: "Voice Search Not Supported",
-        description: "Please use text search instead.",
-        variant: "destructive",
-      });
+      toast.error("Voice Search Not Supported: Please use text search instead.");
     }
   };
 
@@ -574,21 +591,46 @@ export const Index2 = () => {
     // Fetch all properties without any filters
     fetchProperties("", "");
 
-    toast({
-      title: "Filters Cleared",
-      description: "Showing all available properties",
-    });
+    toast.info("Filters Cleared: Showing all available properties");
   };
+
+  // Effect for live client-side filtering as user types
+  useEffect(() => {
+    if (searchTerm === "") {
+      setFilteredProperties(properties); // Show all if search is empty
+    } else {
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const filtered = properties.filter(
+        (property) =>
+          property.title?.toLowerCase().includes(lowercasedSearchTerm) ||
+          property.location?.toLowerCase().includes(lowercasedSearchTerm) ||
+          property.address?.toLowerCase().includes(lowercasedSearchTerm) ||
+          property.description?.toLowerCase().includes(lowercasedSearchTerm) ||
+          property.builder?.toLowerCase().includes(lowercasedSearchTerm) ||
+          property.bhkOptions?.some((bhk: any) =>
+            bhk.bhk?.toLowerCase().includes(lowercasedSearchTerm)
+          )
+      );
+      setFilteredProperties(filtered);
+    }
+  }, [searchTerm, properties]);
 
   const handleSearch = () => {
     setSearchLoading(true);
+    // Update context for any other components that might need it
     setSearchParams({ keyword: searchTerm, propertyType: propertyType });
-    navigate('/property-search');
+
+    // Perform a new backend search
+    fetchProperties(searchTerm, propertyType).finally(() => {
+      setSearchLoading(false);
+    });
   };
 
   // Handle property type change
   const handlePropertyTypeChange = (value: string) => {
     setPropertyType(value);
+    // Trigger a backend search with the new property type and the existing search term.
+    fetchProperties(searchTerm, value);
   };
 
   // Handle Enter key press in search input
@@ -691,6 +733,61 @@ export const Index2 = () => {
     setgetaminitie(Array.isArray(response) ? response : []);
     // console.log("aminities:",response);
   };
+
+  // Pagination State and Handler
+    const [currentPage, setCurrentPage] = useState(1);
+    const [propertiesPerPage] = useState(6);
+
+    const handlePageChange = (page: number) => {
+      setCurrentPage(page);
+      window.scrollTo({ top: 500, behavior: 'smooth' });
+    };
+
+    // Calculate total pages
+    const totalPages = Math.ceil(
+      (filteredProperties.length > 0
+        ? filteredProperties.length
+        : properties.length) / propertiesPerPage
+    );
+
+    // Get current properties to display
+    const currentProperties = (
+      filteredProperties.length > 0 ? filteredProperties : properties
+    ).slice(
+      (currentPage - 1) * propertiesPerPage,
+      currentPage * propertiesPerPage
+    );
+
+    const renderPagination = () => {
+      const pageNumbers = [];
+      const maxPagesToShow = 5;
+      const halfMaxPages = Math.floor(maxPagesToShow / 2);
+      let startPage = Math.max(1, currentPage - halfMaxPages);
+      let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+      if (endPage - startPage < maxPagesToShow - 1) {
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              href="#"
+              isActive={i === currentPage}
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(i);
+              }}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      return pageNumbers;
+    };
 
   return (
     <>
@@ -921,40 +1018,41 @@ export const Index2 = () => {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {(filteredProperties.length > 0
-                      ? filteredProperties
-                      : properties
-                    ).length > 0 ? (
-                      (filteredProperties.length > 0
-                        ? filteredProperties
-                        : properties
-                      ).map((property) => (
-                        <PropertyCard
-                          key={property.id}
-                          id={property.id.toString()}
-                          image={
-                            property.images?.find((img: any) => img.is_primary)
-                              ?.image ||
-                            property.images?.[0]?.image ||
-                            ""
-                          }
-                          title={property.title || property.name}
-                          builder={property.builder || "N/A"}
-                          location={property.location || property.address}
-                          bhkOptions={property.bhkOptions || []}
-                          description={property.description}
-                          badges={property.badges || []}
-                          ribbon={property.ribbon || ""}
-                          bedrooms={property.bedrooms}
-                          bathrooms={property.bathrooms}
-                          price={property.price}
-                          amenities={property.amenities || []}
-                          isWishlisted={wishlistedProperties.includes(
-                            property.id.toString()
-                          )}
-                          onWishlistToggle={handleWishlistToggle}
-                        />
-                      ))
+                    {currentProperties.length > 0 ? (
+                      currentProperties.map((property) => (
+                          <PropertyCard
+                            key={property.id}
+                            id={property.id.toString()}
+                            slug={property.slug} // Pass slug to PropertyCard
+                            image={
+                              property.images?.find(
+                                (img: any) => img.is_primary
+                              )?.image ||
+                              property.images?.[0]?.image ||
+                              ""
+                            }
+                            title={property.title || property.name}
+                            builder={property.builder || "N/A"}
+                            location={property.location || property.address}
+                            bhkOptions={property.bhkOptions || []}
+                            description={property.description}
+                            badges={property.badges || []}
+                            ribbon={property.ribbon || ""}
+                            bedrooms={property.bedrooms}
+                            bathrooms={property.bathrooms}
+                            price={property.price}
+                            rating={
+                              property.ai_recommended_score
+                                ? (property.ai_recommended_score * 5).toFixed(1)
+                                : undefined
+                            }
+                            amenities={property.amenities || []}
+                            isWishlisted={wishlistedPropertyIds.has(
+                              property.id.toString()
+                            )}
+                            onWishlistToggle={() => handleWishlistToggle(property)}
+                          />
+                        ))
                     ) : (
                       <div className="text-center py-8">
                         <p className="text-muted-foreground">
@@ -979,29 +1077,33 @@ export const Index2 = () => {
               </div>
 
               {/* Pagination */}
+              {totalPages > 1 && (
               <div className="flex justify-center mt-8">
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious href="#" />
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(Math.max(1, currentPage - 1));
+                        }}
+                      />
                     </PaginationItem>
+                    {renderPagination()}
                     <PaginationItem>
-                      <PaginationLink href="#" isActive>
-                        1
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#">2</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#">3</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationNext href="#" />
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(Math.min(totalPages, currentPage + 1));
+                        }}
+                      />
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
               </div>
+              )}
             </main>
           </div>
         </div>
