@@ -377,7 +377,7 @@ const Index = () => {
      <VideoTours />
 
       {/* Featured Properties with Enhanced Design */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Premium Properties</h2>
