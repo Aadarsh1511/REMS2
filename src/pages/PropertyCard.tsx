@@ -115,24 +115,7 @@ export function PropertyCard({
     navigate(`/property/${id}`);
   };
 
-  const [properties, setproperties] = useState<any[]>([]);
-
-  const getuserdata = async () => {
-    const token = localStorage.getItem("access_token");
-    const url = "http://127.0.0.1:8000/api/properties/";
-    let response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    response = await response.json();
-    setproperties(Array.isArray(response) ? response : []);
-    // console.log(response);
-  };
-
-  useEffect(() => {
-    getuserdata();
-  }, []);
+  
 
  
 

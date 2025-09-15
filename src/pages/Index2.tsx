@@ -49,10 +49,12 @@ import {
 import { FilterSidebar } from "./FilterSidebar";
 import { PropertyCard } from "./PropertyCard";
 import { NewLaunchesCarousel } from "./NewLaunchesCarousel";
+import { useSearch } from "@/context/SearchContext";
 import { useNavigate } from "react-router-dom";
 
 export const Index2 = () => {
   const navigate = useNavigate();
+  const { setSearchParams } = useSearch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [wishlistedProperties, setWishlistedProperties] = useState<string[]>(
     []
@@ -579,32 +581,14 @@ export const Index2 = () => {
   };
 
   const handleSearch = () => {
-    console.log("🔍 Manual search triggered with:", {
-      searchTerm,
-      propertyType,
-    });
     setSearchLoading(true);
-
-    // Clear current results
-    setProperties([]);
-
-    const apiValue =
-      propertyType === "all" || propertyType === ""
-        ? ""
-        : parseInt(propertyType, 10);
-
-    fetchProperties(searchTerm, apiValue.toString()).finally(() => {
-      setSearchLoading(false);
-    });
+    setSearchParams({ keyword: searchTerm, propertyType: propertyType });
+    navigate('/property-search');
   };
 
   // Handle property type change
   const handlePropertyTypeChange = (value: string) => {
-    console.log("📌 Selected propertyType value:", value);
     setPropertyType(value);
-
-    console.log("🔄 Fetching with search:", searchTerm, "and type:", value);
-    fetchProperties(searchTerm, value);
   };
 
   // Handle Enter key press in search input
