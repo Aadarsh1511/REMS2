@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,11 @@ import BuyRentSell from "@/components/ui/BuyRentSell";
 import VideoTours from "@/components/ui/VideoTours";
 import PropertyListings from "@/components/ui/PropertyListings";
 import AIFeatures from "@/components/ui/AIFeatures";
-import Header from "@/components/Header"
+import {TopDest} from "@/components/ui/top_dest";
+import Browse_exp from "@/components/ui/browse_exp";
+import { FeaturesGrid } from "@/components/ui/features-grid";
+import { createPortal } from "react-dom";
+import Header from "@/components/Header";
 
 
 
@@ -313,7 +318,7 @@ const Index = () => {
       icon: Calculator,
       title: "EMI Calculator",
       description: "Calculate your monthly EMI with our advanced calculator",
-      color: "text-blue-500"
+      color: "text-purple-500"
     },
     {
       icon: PieChart,
@@ -335,52 +340,94 @@ const Index = () => {
     }
   ];
 
+
+const headings = [
+    <>
+      Find <span className="text-purple-400">exclusive homes</span> that<br className="hidden sm:block" />
+      <span className="block sm:inline">fit your life style</span>
+    </>,
+    <>
+      Discover <span className="text-purple-400">dream apartments</span> for your comfort<br className="hidden sm:block" />
+    </>,
+    <>
+      Explore <span className="text-purple-400">modern villas</span> near<br className="hidden sm:block" />
+      <span className="block sm:inline">the cityscape</span>
+    </>,
+  ];
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [animate, setAnimate] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimate(false); // hide before change
+      setTimeout(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % headings.length);
+        setAnimate(true); // show after change
+      }, 300); // animation hide time
+    }, 3000); // every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+
   return (
-    <div className="bg-background">
+
+
+    <div className="bg-white   ">
+      
 
       {/* Hero Section */}
       <section className="relative w-full min-h-screen h-screen overflow-hidden p-0 m-0">
-        {/* Background Video */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-[91%] object-cover z-0"
-        >
-          <source src="public/banner_video.mov" type="video/mp4" />
-        </video>
+  {/* Video Background */}
+  <div className="absolute inset-0 w-full h-[91%] z-0 pointer-events-none">
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      className="w-full h-full object-cover"
+    >
+      <source src="https://cdn.pixabay.com/video/2025/08/12/296958_large.mp4" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  </div>
 
-        {/* Full Black Overlay */}
-        {/* <div className="absolute inset-0 w-full h-[500px] bg-black/60 z-40" /> */}
+  {/* Content */}
+  <div className="relative z-50 flex flex-col items-center justify-start h-full px-4 pt-48 pb-40 pointer-events-auto">
+    {/* Main Heading */}
+    <div className="text-center mb-8 max-w-4xl mx-auto h-48 flex items-center justify-center">
+      <div
+        className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl max-w-6xl font-bold text-white leading-tight px-4 mb-6 transition-all duration-700 ease-out ${
+          animate ? "animate-slideIn opacity-100" : "opacity-0"
+        }`}
+      >
+        {headings[currentIndex]}
+      </div>
+    </div>
 
-        {/* Content */}
-        <div className="relative z-50 flex flex-col items-center justify-start h-full px-4 pt-52">
-          {/* Main Heading */}
-          <div className="text-center mb-8 max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight px-4">
-              Find <span className="text-orange-400">exclusive homes</span> that<br className="hidden sm:block" />
-              <span className="block sm:inline">fit your life style</span>
-            </h1>
-          </div>
-          {/* Centered Search Interface */}
-          <div className="w-full max-w-4xl mx-auto px-4">
-            <SearchInterface />
-          </div>
-        </div>
-      </section>
-      <PropertyCategories />
+    {/* Search Interface */}
+    <div className="w-full max-w-4xl mx-auto px-4">
+      <SearchInterface />
+    </div>
+  </div>
+</section>
+
+      <TopDest />
+      
       <BuyRentSell />
+      <PropertyCategories />
 
 
       {/* Video Tour Section */}
      <VideoTours />
+     <Browse_exp />
 
       {/* Featured Properties with Enhanced Design */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-purple">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Premium Properties</h2>
+            <h2 className="text-5xl font-bold mb-4">Premium <span className="text-purple-600">Properties</span></h2>
             <p className="text-xl text-muted-foreground">Handpicked properties for sale and rent</p>
             
             <div className="flex justify-center mt-8">
@@ -397,7 +444,7 @@ const Index = () => {
           <Carousel className="w-full">
             <CarouselContent className="-ml-2 md:-ml-4">
               {featuredProperties.map((property) => (
-                <CarouselItem key={property.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                <CarouselItem key={property.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 bg-gray-50">
                   <Card className="card-hover interactive-card overflow-hidden h-full">
                     <div className="property-image relative h-52">
                       <img 
@@ -408,7 +455,7 @@ const Index = () => {
                       <Badge className="absolute top-3 left-3 bg-accent text-accent-foreground">
                         {property.tag}
                       </Badge>
-                      <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground">
+                      <Badge className="absolute top-3 right-3 bg-purple-600 text-white">
                         {property.type === 'sale' ? 'Sale' : 'Rent'}
                       </Badge>
                       <div className="absolute bottom-3 left-3 right-3">
@@ -436,7 +483,7 @@ const Index = () => {
                       
                       <div className="flex justify-between items-center mb-4">
                         <div>
-                          <div className="text-2xl font-bold text-primary">
+                          <div className="text-2xl font-bold text-purple-600">
                             {property.type === 'sale' ? property.price : property.rent}
                           </div>
                           {property.type === 'sale' && (
@@ -454,7 +501,7 @@ const Index = () => {
                       <div className="flex gap-2">
                         <Button 
                           size="sm" 
-                          className="flex-1"
+                          className="flex-1 bg-purple-500 text-white hover:bg-purple-600 "
                           onClick={() => handleCall("+91 98765 43210")}
                         >
                           <Phone className="h-4 w-4 mr-1" />
@@ -462,8 +509,7 @@ const Index = () => {
                         </Button>
                         <Button 
                           size="sm" 
-                          variant="outline" 
-                          className="flex-1"
+                          className=" bg-purple-300 hover:bg-purple-400 text-black flex-1"
                           onClick={() => navigate(`/property/${property.id}`)}
                         >
                           View Details
@@ -480,7 +526,7 @@ const Index = () => {
           
           <div className="text-center mt-12">
             <Link to="/search">
-              <Button size="lg" className="btn-property">
+              <Button size="lg" className="btn-property bg-purple-500 text-white hover:bg-purple-600">
                 View All Properties
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -490,19 +536,19 @@ const Index = () => {
       </section>
 
       {/* Property Services Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/5 to-accent/5">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Property Services</h2>
+            <h2 className="text-5xl font-bold mb-4">Property <span className="text-purple-600">Services</span> </h2>
             <p className="text-xl text-muted-foreground">Complete real estate solutions at your fingertips</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {propertyServices.map((service, index) => (
-              <Card key={index} className="card-hover text-center p-8 hover:shadow-xl transition-all duration-300">
+              <Card key={index} className="card-hover text-center p-8 hover:shadow-xl transition-all bg-gray-50 duration-300">
                 <div className="mb-6">
                   <div className={`inline-flex p-4 rounded-full bg-gradient-to-r ${
-                    index === 0 ? 'from-blue-100 to-blue-50' :
+                    index === 0 ? 'from-purple-100 to-purple-50' :
                     index === 1 ? 'from-green-100 to-green-50' :
                     index === 2 ? 'from-purple-100 to-purple-50' :
                     'from-orange-100 to-orange-50'
@@ -513,6 +559,7 @@ const Index = () => {
                 <h3 className="text-xl font-semibold mb-3">{service.title}</h3>
                 <p className="text-muted-foreground mb-6">{service.description}</p>
                 <Button 
+                className="bg-purple-500 text-white hover:bg-purple-600 hover:text-white"
                   variant="outline" 
                   size="sm"
                   onClick={() => {
@@ -531,17 +578,17 @@ const Index = () => {
       </section>
 
       {/* Expert Agents Section */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-purple">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Meet Our Expert Agents</h2>
+            <h2 className="text-5xl font-bold mb-4">Meet Our <span className="text-purple-600">Expert Agents</span> </h2>
             <p className="text-xl text-muted-foreground">Trusted professionals to guide your property journey</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {agents.map((agent) => (
               <Card key={agent.id} className="card-hover text-center overflow-hidden">
-                <CardContent className="p-8">
+                <CardContent className="p-8 bg-gray-50">
                   <div className="relative mb-6">
                     <img 
                       src={agent.image} 
@@ -577,7 +624,7 @@ const Index = () => {
                   <div className="flex gap-2">
                     <Button 
                       size="sm" 
-                      className="flex-1"
+                      className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
                       onClick={() => handleCall(agent.phone)}
                     >
                       <Phone className="h-4 w-4 mr-1" />
@@ -585,8 +632,8 @@ const Index = () => {
                     </Button>
                     <Button 
                       size="sm" 
-                      variant="outline" 
-                      className="flex-1"
+                      
+                      className="flex-1 bg-purple-500 text-white hover:bg-purple-600"
                       onClick={() => navigate(`/agent/${agent.id}`)}
                     >
                       <MessageSquare className="h-4 w-4 mr-1" />
@@ -600,6 +647,7 @@ const Index = () => {
         </div>
       </section>
       <PropertyListings />
+      <FeaturesGrid />
 
       {/* Enquiry Form Section */}
       <section className="py-20 bg-gradient-to-r from-primary/10 to-accent/10">
@@ -613,7 +661,7 @@ const Index = () => {
               
               <div className="space-y-6">
                 <div className="flex items-center space-x-4">
-                  <div className="bg-primary p-3 rounded-full">
+                  <div className="bg-purple-600 p-3 rounded-full">
                     <CheckCircle className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -623,7 +671,7 @@ const Index = () => {
                 </div>
                 
                 <div className="flex items-center space-x-4">
-                  <div className="bg-primary p-3 rounded-full">
+                  <div className="bg-purple-600 p-3 rounded-full">
                     <Clock className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -633,7 +681,7 @@ const Index = () => {
                 </div>
                 
                 <div className="flex items-center space-x-4">
-                  <div className="bg-primary p-3 rounded-full">
+                  <div className="bg-purple-600 p-3 rounded-full">
                     <Award className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -713,7 +761,7 @@ const Index = () => {
                     </Select>
                   </div>
                   
-                  <div>
+                  {/* <div>
                     <Label htmlFor="budget">Budget Range</Label>
                     <Select onValueChange={(value) => setFormData({...formData, budget: value})}>
                       <SelectTrigger>
@@ -727,9 +775,9 @@ const Index = () => {
                         <SelectItem value="above-500">Above ₹5 Crores</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                  </div> */}
                   
-                  <div>
+                  {/* <div>
                     <Label htmlFor="location">Preferred Location</Label>
                     <Input 
                       id="location" 
@@ -737,9 +785,9 @@ const Index = () => {
                       value={formData.location}
                       onChange={(e) => setFormData({...formData, location: e.target.value})}
                     />
-                  </div>
+                  </div> */}
                   
-                  <div>
+                  {/* <div>
                     <Label htmlFor="message">Additional Message</Label>
                     <Textarea 
                       id="message" 
@@ -748,9 +796,9 @@ const Index = () => {
                       value={formData.message}
                       onChange={(e) => setFormData({...formData, message: e.target.value})}
                     />
-                  </div>
+                  </div> */}
                   
-                  <Button type="submit" className="w-full btn-property">
+                  <Button type="submit" className="w-full btn-property bg-purple-600 text-white hover:bg-purple-700">
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Request Callback
                   </Button>
@@ -767,7 +815,7 @@ const Index = () => {
       <AIFeatures />
 
       {/* Stats Section */}
-      <section className="py-20 bg-primary/5">
+      {/* <section className="py-20 bg-primary/5">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Our Impact in Numbers</h2>
@@ -797,10 +845,116 @@ const Index = () => {
             </div>
           </div>
         </div>
+      </section> */}
+
+
+ {/* Testimonials Section */}
+      <section className="pb-10 py-10 bg-purple">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">What Our Customers Say</h2>
+            <p className="text-lg text-muted-foreground">Real experiences from real people who found their dream homes</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6 bg-gray-50">
+                <div className="flex items-center mb-4">
+                  <div className="flex text-yellow-500 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                  </div>
+                  <span className="ml-2 text-sm text-muted-foreground">5.0</span>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  "Amazing experience! Found my dream home in just 2 weeks. The virtual tour feature helped me narrow down my choices before visiting. Highly recommended!"
+                </p>
+                <div className="flex items-center">
+                  <img 
+                    src="https://images.unsplash.com/photo-1494790108755-2616b612b287?w=50&h=50&fit=crop&crop=face" 
+                    alt="Customer"
+                    className="w-10 h-10 rounded-full mr-3"
+                  />
+                  <div>
+                    <div className="font-medium">Priya Sharma</div>
+                    <div className="text-sm text-muted-foreground">Mumbai, Maharashtra</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-all duration-300 bg-gray-50">
+              <CardContent className="p-6 ">
+                <div className="flex items-center mb-4">
+                  <div className="flex text-yellow-500 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                  </div>
+                  <span className="ml-2 text-sm text-muted-foreground">5.0</span>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  "Professional service and transparent pricing. The EMI calculator helped me plan my budget perfectly. Got the keys to my new villa last month!"
+                </p>
+                <div className="flex items-center">
+                  <img 
+                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face" 
+                    alt="Customer"
+                    className="w-10 h-10 rounded-full mr-3"
+                  />
+                  <div>
+                    <div className="font-medium">Rajesh Kumar</div>
+                    <div className="text-sm text-muted-foreground">Bangalore, Karnataka</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-all duration-300 bg-gray-50">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  <div className="flex text-yellow-500 mb-2">
+                    {[...Array(4)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                    <Star className="w-4 h-4 text-gray-300" />
+                  </div>
+                  <span className="ml-2 text-sm text-muted-foreground">4.8</span>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  "Great platform with genuine listings. The legal verification service gave me peace of mind. Smooth property registration process."
+                </p>
+                <div className="flex items-center">
+                  <img 
+                    src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face" 
+                    alt="Customer"
+                    className="w-10 h-10 rounded-full mr-3"
+                  />
+                  <div>
+                    <div className="font-medium">Anita Patel</div>
+                    <div className="text-sm text-muted-foreground">Pune, Maharashtra</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center mt-12">
+            <Link to="/testimonials">
+              <Button className="bg-purple-600 hover:bg-purple-500" size="lg">
+                <Star className="mr-2 h-5 w-5" />
+                View All Reviews
+              </Button>
+            </Link>
+          </div>
+        </div>
       </section>
 
+
+
       {/* CTA Section */}
-      <section className="py-20 hero-gradient text-white">
+      <section className="py-20 hero-gradient  text-white">
         <div className="hero-overlay absolute inset-0" />
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl font-bold mb-6">Ready to Find Your Dream Home?</h2>
@@ -809,13 +963,13 @@ const Index = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/login">
-              <Button size="lg" className="btn-hero pulse-primary">
+              <Button size="lg" className=" bg-purple-600 text-white hover:bg-purple-500">
                 <Users className="mr-2 h-5 w-5" />
                 Get Started
               </Button>
             </Link>
             <Link to="/book-visit">
-              <Button size="lg" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+              <Button size="lg" variant="outline" className="bg-purple-400 border-white/20 text-white hover:bg-purple-500 hover:text-white">
                 Schedule a Visit
               </Button>
             </Link>

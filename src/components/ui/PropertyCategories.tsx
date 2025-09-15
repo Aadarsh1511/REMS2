@@ -1,10 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Home, Building, TreePine, Factory, Store, MapPin, Tent, Mountain, Warehouse } from "lucide-react";
+import { faHouse, faBuilding, faMapMarkerAlt, faStore, faIndustry, faTree, faMountain, faWarehouse } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 
 const PropertyCategories = () => {
   const categories = [
     {
-      icon: Home,
+      icon: faHouse,
       title: "Houses",
       count: "12,450+",
       color: "text-primary",
@@ -12,7 +14,7 @@ const PropertyCategories = () => {
       hoverColor: "hover:bg-primary/20"
     },
     {
-      icon: Building,
+      icon: faBuilding,
       title: "Apartments",
       count: "8,920+",
       color: "text-accent",
@@ -20,7 +22,7 @@ const PropertyCategories = () => {
       hoverColor: "hover:bg-accent/20"
     },
     {
-      icon: TreePine,
+      icon: faMapMarkerAlt,
       title: "Plots",
       count: "5,680+",
       color: "text-real-estate-success",
@@ -28,7 +30,7 @@ const PropertyCategories = () => {
       hoverColor: "hover:bg-real-estate-success/20"
     },
     {
-      icon: Factory,
+      icon: faStore,
       title: "Commercial",
       count: "3,240+",
       color: "text-primary-glow",
@@ -36,7 +38,7 @@ const PropertyCategories = () => {
       hoverColor: "hover:bg-primary-glow/20"
     },
     {
-      icon: Store,
+      icon: faIndustry,
       title: "Retail",
       count: "2,850+",
       color: "text-real-estate-warning",
@@ -44,7 +46,7 @@ const PropertyCategories = () => {
       hoverColor: "hover:bg-real-estate-warning/20"
     },
     {
-      icon: MapPin,
+      icon: faTree,
       title: "Farmhouse",
       count: "1,920+",
       color: "text-accent",
@@ -52,7 +54,7 @@ const PropertyCategories = () => {
       hoverColor: "hover:bg-accent/20"
     },
     {
-      icon: Tent,
+      icon: faMountain,
       title: "Vacation",
       count: "1,450+",
       color: "text-primary",
@@ -60,7 +62,7 @@ const PropertyCategories = () => {
       hoverColor: "hover:bg-primary/20"
     },
     {
-      icon: Mountain,
+      icon: faWarehouse,
       title: "Villa",
       count: "980+",
       color: "text-real-estate-success",
@@ -68,7 +70,7 @@ const PropertyCategories = () => {
       hoverColor: "hover:bg-real-estate-success/20"
     },
     {
-      icon: Warehouse,
+      icon: faIndustry,
       title: "Industrial",
       count: "720+",
       color: "text-primary-glow",
@@ -87,7 +89,7 @@ const PropertyCategories = () => {
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
             Explore by 
-            <span className="bg-gradient-hero bg-clip-text  text-blue-600 "> Property Type</span>
+            <span className="bg-gradient-hero bg-clip-text  text-purple-600 "> Property Type</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Discover your perfect property from our diverse collection of real estate options
@@ -103,7 +105,16 @@ const PropertyCategories = () => {
             >
               <CardContent className="p-6 text-center">
                 <div className={`w-16 h-16 rounded-full ${category.bgColor} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 ${category.color}`}>
-                  <category.icon className="w-8 h-8" />
+                  <FontAwesomeIcon icon={category.icon}  size="2x" beat={category.title === "Houses"}
+                  fade={category.title === "Apartments"} 
+                  bounce={category.title === "Plots"}
+                  shake={category.title === "Commercial"}
+                  spin={category.title === "Retail"}
+                  pulse={category.title === "Farmhouse"}
+                  flip={category.title === "Vacation"}
+                  beatFade={category.title === "Villa"}
+                  spinPulse={category.title === "Industrial"}  
+                  />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
                   {category.title}

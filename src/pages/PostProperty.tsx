@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, Camera, MapPin, Home, DollarSign, FileText, CheckCircle, Star } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 const PostProperty = () => {
   const { toast } = useToast();
@@ -19,23 +20,102 @@ const PostProperty = () => {
   const [listingType, setListingType] = useState("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
-  const handleChoosePackage = (packageName: string) => {
-    toast({ title: "Package Selected", description: `You selected ${packageName} package. Proceeding to payment...` });
-    // Handle package selection
+  // Add a single state for all form data
+  const [formData, setFormData] = useState({
+    listingType: "",
+    propertyType: "",
+    propertyTitle: "",
+    description: "",
+    bedrooms: "",
+    bathrooms: "",
+    area: "",
+    address: "",
+    amenities: [] as string[],
+    price: "",
+    negotiable: "",
+    security: "",
+    maintenance: "",
+    ownerName: "",
+    phone: "",
+    email: "",
+    terms: false,
+    images: [] as File[],
+  });
+
+  // Update formData on input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: type === "checkbox" ? checked : value,
+    }));
   };
 
+  // Amenities handler
+  const handleAmenityChange = (amenity: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      amenities: checked
+        ? [...prev.amenities, amenity]
+        : prev.amenities.filter((a) => a !== amenity),
+    }));
+  };
+
+  // Select handler
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // File upload handler
   const handleFileUpload = () => {
-    toast({ title: "File Upload", description: "Opening file picker..." });
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
     input.accept = 'image/*';
+    input.onchange = (e: any) => {
+      const files = Array.from(e.target.files) as File[];
+      setFormData((prev) => ({
+        ...prev,
+        images: files,
+      }));
+      setUploadedImages(files.map((file) => URL.createObjectURL(file)));
+    };
     input.click();
   };
 
-  const handlePostProperty = () => {
-    toast({ title: "Property Posted", description: "Your property has been successfully posted!" });
-    // Handle property posting
+  // API Integration on submit
+  const handlePostProperty = async () => {
+    try {
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "images" && Array.isArray(value)) {
+          value.forEach((file, idx) => data.append("images", file));
+        } else if (Array.isArray(value)) {
+          data.append(key, JSON.stringify(value));
+        } else {
+          data.append(key, value as string);
+        }
+      });
+
+      // Replace with your API endpoint
+      await axios.post("YOUR_API_ENDPOINT_HERE", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      toast({ title: "Property Posted", description: "Your property has been successfully posted!" });
+      // Reset form if needed
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to post property." });
+    }
+  };
+
+  const handleChoosePackage = (packageName: string) => {
+    // You can set a state if you want to save the selected package
+    toast({ title: "Package Selected", description: `You chose the ${packageName} package.` });
   };
 
   const benefits = [
@@ -163,7 +243,10 @@ const PostProperty = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="listingType">I want to</Label>
-                      <Select value={listingType} onValueChange={setListingType}>
+                      <Select
+                        value={formData.listingType}
+                        onValueChange={(v) => handleSelectChange("listingType", v)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select listing type" />
                         </SelectTrigger>
@@ -177,7 +260,10 @@ const PostProperty = () => {
                     
                     <div className="space-y-2">
                       <Label htmlFor="propertyType">Property Type</Label>
-                      <Select value={propertyType} onValueChange={setPropertyType}>
+                      <Select
+                        value={formData.propertyType}
+                        onValueChange={(v) => handleSelectChange("propertyType", v)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select property type" />
                         </SelectTrigger>
@@ -194,8 +280,10 @@ const PostProperty = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="propertyTitle">Property Title</Label>
-                    <Input 
-                      id="propertyTitle" 
+                    <Input
+                      id="propertyTitle"
+                      value={formData.propertyTitle}
+                      onChange={handleInputChange}
                       placeholder="Enter a descriptive title for your property"
                       className="w-full"
                     />
@@ -203,8 +291,10 @@ const PostProperty = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="description">Property Description</Label>
-                    <Textarea 
+                    <Textarea
                       id="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
                       placeholder="Describe your property in detail..."
                       className="min-h-[120px]"
                     />
@@ -225,7 +315,7 @@ const PostProperty = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="bedrooms">Bedrooms</Label>
-                      <Select>
+                      <Select value={formData.bedrooms} onValueChange={(v) => handleSelectChange("bedrooms", v)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
@@ -237,10 +327,12 @@ const PostProperty = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
                     <div className="space-y-2">
                       <Label htmlFor="bathrooms">Bathrooms</Label>
-                      <Select>
+                      <Select
+                        value={formData.bathrooms}
+                        onValueChange={(v) => handleSelectChange("bathrooms", v)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
@@ -252,21 +344,23 @@ const PostProperty = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
                     <div className="space-y-2">
-                      <Label htmlFor="area">Total Area</Label>
+                      <Label htmlFor="area">Area</Label>
                       <Input 
                         id="area" 
+                        value={formData.area}
+                        onChange={handleInputChange}
                         placeholder="Enter area"
                         type="number"
                       />
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Complete Address</Label>
+                  <div className="space-y-2 mt-6">
+                    <Label htmlFor="address">Address</Label>
                     <Textarea 
                       id="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
                       placeholder="Enter complete address with landmarks"
                       className="min-h-[100px]"
                     />
@@ -277,7 +371,11 @@ const PostProperty = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {["Parking", "Swimming Pool", "Gym", "Security", "Lift", "Power Backup", "Garden", "Club House", "Water Supply"].map((amenity) => (
                         <div key={amenity} className="flex items-center space-x-2">
-                          <Checkbox id={amenity.toLowerCase()} />
+                          <Checkbox 
+                            id={amenity.toLowerCase()} 
+                            checked={formData.amenities.includes(amenity)}
+                            onCheckedChange={(checked) => handleAmenityChange(amenity, !!checked)}
+                          />
                           <Label htmlFor={amenity.toLowerCase()} className="text-sm">{amenity}</Label>
                         </div>
                       ))}
@@ -299,8 +397,10 @@ const PostProperty = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="price">Expected Price</Label>
-                      <Input 
-                        id="price" 
+                      <Input
+                        id="price"
+                        value={formData.price}
+                        onChange={handleInputChange}
                         placeholder="Enter price"
                         type="number"
                       />
@@ -308,7 +408,10 @@ const PostProperty = () => {
                     
                     <div className="space-y-2">
                       <Label htmlFor="negotiable">Price Negotiable</Label>
-                      <Select>
+                      <Select
+                        value={formData.negotiable}
+                        onValueChange={(v) => handleSelectChange("negotiable", v)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
@@ -326,6 +429,8 @@ const PostProperty = () => {
                         <Label htmlFor="security">Security Deposit</Label>
                         <Input 
                           id="security" 
+                          value={formData.security}
+                          onChange={handleInputChange}
                           placeholder="Enter security deposit"
                           type="number"
                         />
@@ -335,6 +440,8 @@ const PostProperty = () => {
                         <Label htmlFor="maintenance">Maintenance</Label>
                         <Input 
                           id="maintenance" 
+                          value={formData.maintenance}
+                          onChange={handleInputChange}
                           placeholder="Enter maintenance charges"
                           type="number"
                         />
@@ -389,6 +496,8 @@ const PostProperty = () => {
                       <Label htmlFor="ownerName">Owner Name</Label>
                       <Input 
                         id="ownerName" 
+                        value={formData.ownerName}
+                        onChange={handleInputChange}
                         placeholder="Enter owner name"
                       />
                     </div>
@@ -397,6 +506,8 @@ const PostProperty = () => {
                       <Label htmlFor="phone">Phone Number</Label>
                       <Input 
                         id="phone" 
+                        value={formData.phone}
+                        onChange={handleInputChange}
                         placeholder="Enter phone number"
                         type="tel"
                       />
@@ -407,13 +518,20 @@ const PostProperty = () => {
                     <Label htmlFor="email">Email Address</Label>
                     <Input 
                       id="email" 
+                      value={formData.email}
+                      onChange={handleInputChange}
                       placeholder="Enter email address"
                       type="email"
                     />
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="terms" />
+                    <Checkbox
+                      id="terms"
+                      checked={formData.terms}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, terms: !!checked }))
+                       }/>
                     <Label htmlFor="terms" className="text-sm">
                       I agree to the Terms & Conditions and Privacy Policy
                     </Label>

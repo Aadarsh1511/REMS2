@@ -92,11 +92,11 @@ const PropertyCard = ({
         </Button>
         
         {/* Quick View Button - appears on hover */}
-        <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+        {/* <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
           <Button className="w-full bg-background/95 text-foreground hover:bg-background backdrop-blur-sm border border-border/30">
             Quick View
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <CardContent className="p-6 space-y-4">
