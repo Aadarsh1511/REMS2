@@ -169,7 +169,7 @@ const PropertyListings = () => {
           {properties.slice(0, 6).map((property, index) => (
             <div 
               key={property.id} 
-              className="animate-fade-in hover:scale-105 transition-all duration-500"
+              className="animate-fade-in  hover:scale-105 transition-all duration-500"
               style={{animationDelay: `${index * 0.1}s`}}
             >
               <PropertyCard {...property} />
@@ -179,7 +179,7 @@ const PropertyListings = () => {
 
         {/* Load More */}
         <div className="text-center space-y-6">
-          <Button size="lg" className="bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-12 py-6 text-lg">
+          <Button size="lg" className="bg-purple-600 hover:bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-12 py-6 text-lg">
             Explore All Properties
           </Button>
           <p className="text-muted-foreground">

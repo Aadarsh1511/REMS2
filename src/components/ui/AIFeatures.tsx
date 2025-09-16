@@ -106,7 +106,7 @@ const AIFeatures = () => {
         </div>
 
         <div className="text-center space-y-8">
-          <Button size="lg" className="bg-gradient-hero text-white border-purple-500 bg-purple-600 border shadow-glow hover:text-white hover:shadow-elegant transition-all duration-300 px-16 py-8 text-xl rounded-2xl">
+          <Button size="lg" className="bg-gradient-hero text-white bg-purple-500 hover:bg-purple-600 border shadow-glow hover:text-white hover:shadow-elegant transition-all duration-300 px-16 py-8 text-xl rounded-2xl">
             <Brain className="w-6 h-6 mr-3" />
             Experience AI Real Estate
           </Button>

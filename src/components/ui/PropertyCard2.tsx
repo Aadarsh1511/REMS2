@@ -55,7 +55,7 @@ const PropertyCard = ({
             variant={type === "sale" ? "default" : "secondary"} 
             className={`border-0 shadow-md px-3 py-1 text-sm font-semibold ${
               type === "sale" 
-                ? "bg-background/90 text-primary" 
+                ? "bg-background/90 bg text-primary" 
                 : "bg-accent text-white"
             }`}
           >
@@ -71,7 +71,7 @@ const PropertyCard = ({
                 priceChange > 0 
                   ? "bg-real-estate-success text-white" 
                   : "bg-real-estate-warning text-white"
-              } border-0 flex items-center gap-1 shadow-md px-3 py-1`}
+              } border-0 flex items-center gap-1  shadow-md px-3 py-1`}
             >
               <TrendingUp className="w-3 h-3" />
               {priceChange > 0 ? "+" : ""}{priceChange}%
@@ -102,7 +102,7 @@ const PropertyCard = ({
       <CardContent className="p-6 space-y-4">
         <div className="space-y-3">
           <div className="flex justify-between items-start">
-            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
+            <h3 className="text-xl font-bold text-foreground group-hover:text-purple-600 transition-colors leading-tight">
               {title}
             </h3>
           </div>
@@ -114,7 +114,7 @@ const PropertyCard = ({
           
           <div className="flex justify-between items-center">
             <div>
-              <span className="text-3xl font-bold bg-gradient-hero bg-clip-text text-blue-500">
+              <span className="text-3xl font-bold bg-gradient-hero bg-clip-text text-purple-500">
                 {price}
               </span>
               {type === "rent" && <span className="text-sm font-normal text-muted-foreground">/month</span>}
@@ -144,10 +144,10 @@ const PropertyCard = ({
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-4">
-          <Button variant="outline" className="flex-1 border-border/50 hover:bg-secondary/50 bg-yellow-500 text-white hover:bg-yellow-300 hover:text-yellow-800 transition-colors">
+          <Button variant="outline" className="flex-1 border-border/50 hover:bg-secondary/50 bg-purple-600 hover:bg-purple-600 text-white hover:text-white transition-colors">
             View Details
           </Button>
-          <Button className="flex-1 bg-blue-600 text-white border-0 shadow-md hover:shadow-lg transition-all">
+          <Button className="flex-1 bg-purple-400 hover:bg-purple-600 text-white border-0 shadow-md hover:shadow-lg transition-all ">
             Contact Agent
           </Button>
         </div>
