@@ -33,6 +33,8 @@ const PropertySearch = ({ onFilterChange }) => {
   const [viewMode, setViewMode] = useState("grid");
   const [favorites, setFavorites] = useState([]);
   const [sortBy, setSortBy] = useState("relevance");
+  const [propertyType, setPropertyType] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [originalProperties, setOriginalProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);

@@ -94,7 +94,7 @@ const App = () => {
             {/* <Route path="/dashboard" element={<Dashboard />} /> */}
             <Route path="/dashboard" element={<Dashboard/>}/>
             <Route path="/search" element={<Index2/>} />
-            <Route path="/property-search" element={<PropertySearch />} />
+            <Route path="/property-search" element={<PropertySearch onFilterChange={() => {}} />} />
             <Route path="index" element={<Index/>} />
             <Route path="/property/:slug" element={<PropertyDetail />} />
             <Route path="/add-property" element={<AddProperty />} />

@@ -1,5 +1,3 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,18 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Camera, MapPin, Home, DollarSign, FileText, CheckCircle, Star } from "lucide-react";
+import { Upload, Camera, MapPin, Home, DollarSign, FileText, CheckCircle, Star, AlertCircle } from "lucide-react";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import axios from "axios";
 
 const PostProperty = () => {
-  const { toast } = useToast();
-  const [propertyType, setPropertyType] = useState("");
-  const [listingType, setListingType] = useState("");
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
 
-  // Add a single state for all form data
+  // Form data state
   const [formData, setFormData] = useState({
     listingType: "",
     propertyType: "",
@@ -30,7 +25,7 @@ const PostProperty = () => {
     bathrooms: "",
     area: "",
     address: "",
-    amenities: [] as string[],
+    amenities: [],
     price: "",
     negotiable: "",
     security: "",
@@ -39,13 +34,19 @@ const PostProperty = () => {
     phone: "",
     email: "",
     terms: false,
-    images: [] as File[],
+    images: [],
   });
 
+  // Show toast-like messages
+  const showMessage = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage({ type: "", text: "" }), 5000);
+  };
+
   // Update formData on input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e) => {
     const { id, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
+    const checked = e.target.checked;
     setFormData((prev) => ({
       ...prev,
       [id]: type === "checkbox" ? checked : value,
@@ -53,7 +54,7 @@ const PostProperty = () => {
   };
 
   // Amenities handler
-  const handleAmenityChange = (amenity: string, checked: boolean) => {
+  const handleAmenityChange = (amenity, checked) => {
     setFormData((prev) => ({
       ...prev,
       amenities: checked
@@ -63,7 +64,7 @@ const PostProperty = () => {
   };
 
   // Select handler
-  const handleSelectChange = (field: string, value: string) => {
+  const handleSelectChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -76,46 +77,136 @@ const PostProperty = () => {
     input.type = 'file';
     input.multiple = true;
     input.accept = 'image/*';
-    input.onchange = (e: any) => {
-      const files = Array.from(e.target.files) as File[];
+    input.onchange = (e) => {
+      const files = Array.from((e.target as HTMLInputElement).files || []);
+      if (files.length > 10) {
+        showMessage("error", "Maximum 10 images allowed");
+        return;
+      }
       setFormData((prev) => ({
         ...prev,
         images: files,
       }));
-      setUploadedImages(files.map((file) => URL.createObjectURL(file)));
+      setUploadedImages(files.map((file) => ({
+        url: URL.createObjectURL(file),
+        name: file.name
+      })));
+      showMessage("success", `${files.length} images uploaded`);
     };
     input.click();
   };
 
-  // API Integration on submit
+  // Form validation
+  const validateForm = () => {
+    const required = ['listingType', 'propertyType', 'propertyTitle', 'description', 'address', 'price', 'ownerName', 'phone', 'email'];
+    const missing = required.filter(field => !formData[field]);
+    
+    if (missing.length > 0) {
+      showMessage("error", `Please fill: ${missing.join(', ')}`);
+      return false;
+    }
+    
+    if (!formData.terms) {
+      showMessage("error", "Please accept terms and conditions");
+      return false;
+    }
+    
+    if (formData.images.length === 0) {
+      showMessage("error", "Please upload at least one image");
+      return false;
+    }
+    
+    return true;
+  };
+
+  // API Integration with improved error handling
   const handlePostProperty = async () => {
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
+    
     try {
-      const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === "images" && Array.isArray(value)) {
-          value.forEach((file, idx) => data.append("images", file));
-        } else if (Array.isArray(value)) {
-          data.append(key, JSON.stringify(value));
+      // Create FormData for file upload
+      const submitData = new FormData();
+      
+      // Add all form fields
+      Object.keys(formData).forEach(key => {
+        if (key === 'images') {
+          formData.images.forEach(image => {
+            submitData.append('images', image);
+          });
+        } else if (key === 'amenities') {
+          submitData.append('amenities', JSON.stringify(formData.amenities));
         } else {
-          data.append(key, value as string);
+          submitData.append(key, formData[key]);
         }
       });
 
-      // Replace with your API endpoint
-      await axios.post("YOUR_API_ENDPOINT_HERE", data, {
-        headers: { "Content-Type": "multipart/form-data" },
+      
+      const token = "AccessToken"; 
+      
+      console.log("Submitting property data:", Object.fromEntries(submitData.entries()));
+      
+      // Simulate API call
+      const response = await fetch("http://127.0.0.1:8000/api/properties/", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          // Don't set Content-Type for FormData - browser sets it with boundary
+        },
+        body: submitData,
       });
 
-      toast({ title: "Property Posted", description: "Your property has been successfully posted!" });
-      // Reset form if needed
+      if (response.ok) {
+        const result = await response.json();
+        showMessage("success", "Property posted successfully!");
+        
+        // Reset form
+        setFormData({
+          listingType: "",
+          propertyType: "",
+          propertyTitle: "",
+          description: "",
+          bedrooms: "",
+          bathrooms: "",
+          area: "",
+          address: "",
+          amenities: [],
+          price: "",
+          negotiable: "",
+          security: "",
+          maintenance: "",
+          ownerName: "",
+          phone: "",
+          email: "",
+          terms: false,
+          images: [],
+        });
+        setUploadedImages([]);
+        
+      } else {
+        const errorData = await response.json();
+        console.error("API Error:", errorData);
+        
+        // Handle specific error codes
+        if (response.status === 401) {
+          showMessage("error", "Authentication failed. Please log in again.");
+        } else if (response.status === 400) {
+          showMessage("error", errorData?.message || "Invalid data submitted");
+        } else {
+          showMessage("error", "Failed to post property. Please try again.");
+        }
+      }
     } catch (error) {
-      toast({ title: "Error", description: "Failed to post property." });
+      console.error("Network Error:", error);
+      showMessage("error", "Network error. Please check your connection.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleChoosePackage = (packageName: string) => {
-    // You can set a state if you want to save the selected package
-    toast({ title: "Package Selected", description: `You chose the ${packageName} package.` });
+  const handleChoosePackage = (packageName) => {
+    showMessage("success", `${packageName} package selected`);
   };
 
   const benefits = [
@@ -148,7 +239,20 @@ const PostProperty = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* <Header /> */}
+      {/* Message Display */}
+      {message.text && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+          message.type === 'success' ? 'bg-green-500 text-white' : 
+          message.type === 'error' ? 'bg-red-500 text-white' : 
+          'bg-blue-500 text-white'
+        }`}>
+          <div className="flex items-center gap-2">
+            {message.type === 'error' && <AlertCircle className="w-4 h-4" />}
+            {message.type === 'success' && <CheckCircle className="w-4 h-4" />}
+            <span>{message.text}</span>
+          </div>
+        </div>
+      )}
       
       {/* Hero Section */}
       <section className="relative py-20 bg-gradient-to-br from-primary/10 to-secondary/10">
@@ -242,7 +346,7 @@ const PostProperty = () => {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="listingType">I want to</Label>
+                      <Label htmlFor="listingType">I want to *</Label>
                       <Select
                         value={formData.listingType}
                         onValueChange={(v) => handleSelectChange("listingType", v)}
@@ -259,7 +363,7 @@ const PostProperty = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="propertyType">Property Type</Label>
+                      <Label htmlFor="propertyType">Property Type *</Label>
                       <Select
                         value={formData.propertyType}
                         onValueChange={(v) => handleSelectChange("propertyType", v)}
@@ -279,7 +383,7 @@ const PostProperty = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="propertyTitle">Property Title</Label>
+                    <Label htmlFor="propertyTitle">Property Title *</Label>
                     <Input
                       id="propertyTitle"
                       value={formData.propertyTitle}
@@ -290,7 +394,7 @@ const PostProperty = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="description">Property Description</Label>
+                    <Label htmlFor="description">Property Description *</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
@@ -345,7 +449,7 @@ const PostProperty = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="area">Area</Label>
+                      <Label htmlFor="area">Area (sq ft)</Label>
                       <Input 
                         id="area" 
                         value={formData.area}
@@ -356,7 +460,7 @@ const PostProperty = () => {
                     </div>
                   </div>
                   <div className="space-y-2 mt-6">
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address">Address *</Label>
                     <Textarea 
                       id="address"
                       value={formData.address}
@@ -396,7 +500,7 @@ const PostProperty = () => {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="price">Expected Price</Label>
+                      <Label htmlFor="price">Expected Price *</Label>
                       <Input
                         id="price"
                         value={formData.price}
@@ -423,7 +527,7 @@ const PostProperty = () => {
                     </div>
                   </div>
 
-                  {listingType === "rent" && (
+                  {formData.listingType === "rent" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="security">Security Deposit</Label>
@@ -457,27 +561,38 @@ const PostProperty = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Camera className="w-5 h-5" />
-                    Property Photos
+                    Property Photos *
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="border-2 border-dashed border-primary/20 rounded-lg p-8 text-center">
                     <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Upload Property Photos</h3>
-                    <p className="text-muted-foreground mb-4">Drag and drop photos or click to browse</p>
+                    <p className="text-muted-foreground mb-4">Add up to 10 high-quality images (Max 5MB each)</p>
                     <Button variant="outline" className="gap-2" onClick={handleFileUpload}>
                       <Upload className="w-4 h-4" />
                       Choose Files
                     </Button>
                   </div>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {uploadedImages.map((image, index) => (
-                      <div key={index} className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                        <Camera className="w-8 h-8 text-muted-foreground" />
+                  {uploadedImages.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {uploadedImages.length} image(s) uploaded
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {uploadedImages.map((image, index) => (
+                          <div key={index} className="aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                            <img 
+                              src={image.url} 
+                              alt={`Property ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -493,7 +608,7 @@ const PostProperty = () => {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="ownerName">Owner Name</Label>
+                      <Label htmlFor="ownerName">Owner Name *</Label>
                       <Input 
                         id="ownerName" 
                         value={formData.ownerName}
@@ -503,7 +618,7 @@ const PostProperty = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone">Phone Number *</Label>
                       <Input 
                         id="phone" 
                         value={formData.phone}
@@ -515,7 +630,7 @@ const PostProperty = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
+                    <Label htmlFor="email">Email Address *</Label>
                     <Input 
                       id="email" 
                       value={formData.email}
@@ -533,12 +648,17 @@ const PostProperty = () => {
                         setFormData((prev) => ({ ...prev, terms: !!checked }))
                        }/>
                     <Label htmlFor="terms" className="text-sm">
-                      I agree to the Terms & Conditions and Privacy Policy
+                      I agree to the Terms & Conditions and Privacy Policy *
                     </Label>
                   </div>
 
-                  <Button className="w-full" size="lg" onClick={handlePostProperty}>
-                    Post Property
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    onClick={handlePostProperty}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Posting Property..." : "Post Property"}
                   </Button>
                 </CardContent>
               </Card>
@@ -546,8 +666,6 @@ const PostProperty = () => {
           </Tabs>
         </div>
       </section>
-
-      {/* <Footer /> */}
     </div>
   );
 };

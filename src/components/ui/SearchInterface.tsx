@@ -13,6 +13,10 @@ import { cn } from "@/lib/utils";
 
 const SearchInterface = () => {
   const [activeSearchTab, setActiveSearchTab] = useState("Buy");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dropdownValue, setDropdownValue] = useState("all-residential");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const searchTabs = ["Buy", "Rent", "New Launch", "Commercial", "Plots/Land", "Projects", "Post Property"];
   const popularSearches = ["Jaipur", "Bangalore", "Chennai", "Mumbai", "Hyderabad", "Pune", "Delhi NCR", "Ahmedabad"];
@@ -100,10 +104,26 @@ const SearchInterface = () => {
     return activeSearchTab === "Post Property" ? "Post Free Ad" : "Search";
   };
 
+  // API call for search
+  const handleSearch = async () => {
+    setLoading(true);
+    setResults([]);
+    try {
+      // Replace with your API endpoint and params
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/properties/search/?q=${encodeURIComponent(searchQuery)}&type=${dropdownValue}&tab=${activeSearchTab}`
+      );
+      const data = await response.json();
+      setResults(data.results || data); // Adjust according to your API response
+    } catch (error) {
+      setResults([]);
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4">
       <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-search">
-        
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-4 sm:mb-6 border-b pb-4 justify-center">
           {searchTabs.map((tab) => (
@@ -116,7 +136,10 @@ const SearchInterface = () => {
                   ? "text-primary border-b-2 border-primary bg-transparent hover:bg-transparent"
                   : "text-gray-600 hover:text-primary"
               )}
-              onClick={() => setActiveSearchTab(tab)}
+              onClick={() => {
+                setActiveSearchTab(tab);
+                setDropdownValue(getDropdownValue());
+              }}
             >
               {tab}
               {tab === "New Launch" && (
@@ -139,6 +162,8 @@ const SearchInterface = () => {
                 <Search className="h-4 sm:h-5 w-4 sm:w-5 text-gray-400" />
               </div>
               <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={getPlaceholderText()}
                 className="pl-10 pr-16 sm:pr-20 h-10 sm:h-12 border-gray-200 focus:border-primary text-sm sm:text-base"
               />
@@ -152,7 +177,10 @@ const SearchInterface = () => {
               </div>
             </div>
 
-            <Select value={getDropdownValue()} onValueChange={(value) => console.log("Selected:", value)}>
+            <Select
+              value={dropdownValue}
+              onValueChange={(value) => setDropdownValue(value)}
+            >
               <SelectTrigger className="w-full sm:w-48 h-10 sm:h-12 border-gray-200 focus:border-primary text-sm sm:text-base">
                 <SelectValue />
               </SelectTrigger>
@@ -165,8 +193,12 @@ const SearchInterface = () => {
               </SelectContent>
             </Select>
 
-            <Button className="bg-primary hover:bg-primary/90 h-10 sm:h-12 px-6 sm:px-8 w-full sm:w-auto">
-              {getButtonText()}
+            <Button
+              className="bg-primary hover:bg-primary/90 h-10 sm:h-12 px-6 sm:px-8 w-full sm:w-auto"
+              onClick={handleSearch}
+              disabled={loading}
+            >
+              {loading ? "Searching..." : getButtonText()}
             </Button>
           </div>
         </div>
@@ -180,11 +212,32 @@ const SearchInterface = () => {
                 key={index}
                 variant="outline"
                 className="text-gray-600 border-gray-200 hover:border-primary hover:text-primary rounded-full text-xs sm:text-sm px-3 py-1.5"
+                onClick={() => setSearchQuery(search)}
               >
                 {search}
               </Button>
             ))}
           </div>
+        </div>
+
+        {/* Search Results */}
+        <div className="mt-6">
+          {loading && <div className="text-center text-gray-500">Loading...</div>}
+          {!loading && results.length > 0 && (
+            <div className="grid gap-4">
+              {results.map((property, idx) => (
+                <div key={property.id || idx} className="border rounded-lg p-4 shadow-sm">
+                  <div className="font-semibold text-lg">{property.title || property.propertyTitle}</div>
+                  <div className="text-sm text-gray-600">{property.location || property.address}</div>
+                  <div className="text-sm text-gray-500">{property.price ? `₹${property.price}` : ""}</div>
+                  {/* Add more property info as needed */}
+                </div>
+              ))}
+            </div>
+          )}
+          {!loading && results.length === 0 && (
+            <div className="text-center text-gray-400">No properties found.</div>
+          )}
         </div>
       </div>
     </div>
