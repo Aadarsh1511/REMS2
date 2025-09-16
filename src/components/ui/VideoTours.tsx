@@ -151,11 +151,11 @@ const VideoTours = () => {
                 </div>
                 
                 <div className="flex gap-4">
-                  <Button size="lg" className="bg-gradient-hero bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300">
+                  <Button size="lg" className="bg-gradient-hero hover:bg-purple-600 bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300">
                     <Play className="w-5 h-5 mr-2" />
                     Watch Tour
                   </Button>
-                  <Button variant="outline" size="lg" className="border-border/50 hover:bg-secondary/50">
+                  <Button variant="outline" size="lg" className="border-border/50 hover:bg-purple-600 hover:text-white">
                     Property Details
                   </Button>
                 </div>
@@ -239,10 +239,10 @@ const VideoTours = () => {
             Schedule a personalized virtual tour with our expert agents and explore properties from the comfort of your home
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-gradient-hero bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-8 py-6 text-lg">
+            <Button size="lg" className="bg-gradient-hero bg-purple-600 hover:bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-8 py-6 text-lg">
               Schedule Virtual Tour
             </Button>
-            <Button variant="outline" size="lg" className="border-border/50 hover:bg-secondary/50 px-8 py-6 text-lg">
+            <Button variant="outline" size="lg" className="border-border/50 hover:bg-purple-600 px-8 py-6 text-lg">
               Book a Visit
             </Button>
           </div>
