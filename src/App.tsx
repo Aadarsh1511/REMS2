@@ -7,10 +7,11 @@ import { SearchProvider } from "./context/SearchContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Index from "./pages/Index";
+
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 // import { Dashboard } from "./pages/Dashboard";
-import PropertySearch from "./pages/PropertySearch";
+// import PropertySearch from "./pages/PropertySearch";
 import PropertyDetail from "./pages/PropertyDetail";
 import AddProperty from "./pages/AddProperty";
 import BookVisit from "./pages/BookVisit";
@@ -49,6 +50,7 @@ import Footer from "./components/Footer";
 import { useState, useEffect } from "react";
 import { Index2 } from "./pages/Index2";
 import Dashboard from "./pages/Dashboard";
+import PropertySearch from "./pages/PropertySearch";
 
 
 
@@ -86,15 +88,16 @@ const App = () => {
           <Header isLoggeIn={isLoggeIn} setisLoggedIn={setisLoggedIn} />
 
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Index2 />} />
             <Route
               path="/login"
               element={<Login setisLoggeIn={setisLoggedIn} />}
             />
-            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+            
             <Route path="/dashboard" element={<Dashboard/>}/>
             <Route path="/search" element={<Index2/>} />
             <Route path="/property-search" element={<PropertySearch onFilterChange={() => {}} />} />
+            <Route path="/property-search" element={<PropertySearch onFilterChange={undefined}/>} />
             <Route path="index" element={<Index/>} />
             <Route path="/property/:slug" element={<PropertyDetail />} />
             <Route path="/add-property" element={<AddProperty />} />
@@ -123,7 +126,6 @@ const App = () => {
               path="/real-estate-investments"
               element={<RealEstateInvestments />}
             />
-           
             <Route path="/builders-in-india" element={<BuildersIndia />} />
             <Route path="/area-converter" element={<AreaConverter />} />
             <Route path="/articles" element={<Articles />} />

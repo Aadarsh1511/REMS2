@@ -407,8 +407,10 @@ const headings = [
     </div>
 
     {/* Search Interface */}
-    <div className="w-full max-w-4xl mx-auto px-4">
+    <div className="w-full max-w-4xl mx-auto mb-20 px-4">
       <SearchInterface />
+     
+      
     </div>
   </div>
 </section>
@@ -509,7 +511,7 @@ const headings = [
                         </Button>
                         <Button 
                           size="sm" 
-                          className=" bg-purple-300 hover:bg-purple-400 text-black flex-1"
+                          className=" bg-purple-300 hover:bg-purple-600 hover:text-white text-black flex-1"
                           onClick={() => navigate(`/property/${property.id}`)}
                         >
                           View Details
@@ -969,7 +971,7 @@ const headings = [
               </Button>
             </Link>
             <Link to="/book-visit">
-              <Button size="lg" variant="outline" className="bg-purple-400 border-white/20 text-white hover:bg-purple-500 hover:text-white">
+              <Button size="lg" variant="outline" className="bg-purple-400 border-white/20 text-white hover:bg-purple-600 hover:text-white">
                 Schedule a Visit
               </Button>
             </Link>

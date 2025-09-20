@@ -188,8 +188,8 @@ const BuyRentSell = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" size="sm">View Details</Button>
-              <Button size="sm" className="bg-gradient-hero bg-purple-400 text-white border-0">
+              <Button className=" bg-transparent  text-black font-semibold text-md hover:text-white border-2  hover:bg-purple-600  " size="sm">View Details</Button>
+              <Button size="sm" className="bg-gradient-hero bg-purple-400 hover:bg-purple-600 text-white border-0">
                 Contact
               </Button>
             </div>
@@ -228,9 +228,9 @@ const BuyRentSell = () => {
                 key={tab.id}
                 variant={activeTab === tab.id ? "default" : "ghost"}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-8 py-4 text-lg rounded-xl transition-all duration-300 ${
+                className={`px-8 py-4 text-lg rounded-xl hover:bg-purple-600 transition-all duration-300  ${
                   activeTab === tab.id 
-                    ? "bg-gradient-hero text-purple-700 shadow-glow" 
+                    ? "bg-gradient-hero text-purple-700 hover:text-black shadow-glow" 
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -283,7 +283,7 @@ const BuyRentSell = () => {
         {/* View More Button */}
         {(activeTab === "buy" || activeTab === "rent") && (
           <div className="text-center mt-16">
-            <Button size="lg" className="bg-gradient-hero bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-12 py-6 text-lg">
+            <Button size="lg" className="bg-gradient-hero hover:bg-purple-600 bg-purple-600 text-white border-0 shadow-glow hover:shadow-elegant transition-all duration-300 px-12 py-6 text-lg">
               View All {activeTab === "buy" ? "Properties for Sale" : "Rental Properties"}
             </Button>
           </div>

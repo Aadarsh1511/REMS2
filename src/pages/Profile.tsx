@@ -1,36 +1,80 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { User, Settings, Heart, Eye, MessageCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from 'react-toastify';
+import { getWishlist, WishlistItem } from "@/lib/api";
+import { jwtDecode } from "jwt-decode";
+import { PropertyCard } from "./PropertyCard";
 
 const Profile = () => {
-  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "John Doe",
     email: "john@example.com"
   });
 
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [loadingWishlist, setLoadingWishlist] = useState(true);
+
+  const getCurrentUserId = (): string | null => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      try {
+        const decoded: { user_id: string } = jwtDecode(token);
+        return decoded.user_id;
+      } catch (error) {
+        console.error("Failed to decode token:", error);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const fetchUserWishlist = async () => {
+      setLoadingWishlist(true);
+      try {
+        const userId = getCurrentUserId();
+        if (!userId) {
+          toast.error("Authentication Required: Please log in to view your wishlist.");
+          setLoadingWishlist(false);
+          return;
+        }
+        const data = await getWishlist();
+        // Filter wishlist items to only show those belonging to the current user
+        const userWishlist = data.filter(item => item.user === userId);
+        setWishlist(userWishlist);
+      } catch (error) {
+        console.error("Failed to fetch wishlist:", error);
+        toast.error("Failed to load wishlist.");
+      } finally {
+        setLoadingWishlist(false);
+      }
+    };
+
+    fetchUserWishlist();
+  }, []);
+
   const handleSaveChanges = () => {
-    toast({ title: "Profile Updated", description: "Your profile has been successfully updated!" });
+    toast.success("Profile Updated: Your profile has been successfully updated!");
     console.log("Saving profile:", formData);
   };
 
   const handleViewSavedProperties = () => {
-    toast({ title: "Saved Properties", description: "Loading your saved properties..." });
+    toast.info("Saved Properties: Loading your saved properties...");
     // Navigate to saved properties
   };
 
   const handleViewPropertyViews = () => {
-    toast({ title: "Property Views", description: "Loading your viewed properties..." });
+    toast.info("Property Views: Loading your viewed properties...");
     // Navigate to viewed properties
   };
 
   const handleViewInquiries = () => {
-    toast({ title: "Inquiries", description: "Loading your active inquiries..." });
+    toast.info("Inquiries: Loading your active inquiries...");
     // Navigate to inquiries
   };
 
@@ -55,7 +99,7 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
+              <div className="text-2xl font-bold">{loadingWishlist ? "..." : wishlist.length}</div>
               <p className="text-muted-foreground">Properties in wishlist</p>
             </CardContent>
           </Card>
@@ -114,6 +158,48 @@ const Profile = () => {
               </div>
             </div>
             <Button className="btn-hero" onClick={handleSaveChanges}>Save Changes</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="card-gradient">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Heart className="mr-2 h-5 w-5" />
+              Your Wishlist
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingWishlist ? (
+              <div className="text-center py-4">Loading your wishlist...</div>
+            ) : wishlist.length === 0 ? (
+              <div className="text-center py-4">No properties saved to your wishlist yet.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {wishlist.map((item) => (
+                  <PropertyCard
+                    key={item.property} // Assuming property ID is unique
+                    id={item.property.toString()}
+                    slug={item.slug}
+                    image="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=500" // Placeholder image
+                    title={`Property ${item.property}`} // Placeholder title
+                    builder="N/A"
+                    location="N/A"
+                    bhkOptions={[]}
+                    description="N/A"
+                    badges={[]}
+                    ribbon=""
+                    amenities={[]}
+                    isWishlisted={true} // Always true for items in wishlist
+                    onWishlistToggle={(propertyId) => {
+                      console.log(`Toggle wishlist for property ${propertyId} from profile.`);
+                      // In a real scenario, you'd call removeFromWishlist here
+                      toast.info(`Wishlist Action: Property ${propertyId} would be removed from wishlist.`);
+                    }}
+                    isProfileView={true} // Pass the new prop
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

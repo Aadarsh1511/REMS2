@@ -24,7 +24,9 @@ import {
   Square,
   Heart,
   Star,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const PropertySearch = ({ onFilterChange }) => {
   const navigate = useNavigate();
@@ -39,6 +41,24 @@ const PropertySearch = ({ onFilterChange }) => {
   const [originalProperties, setOriginalProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [propertyImages, setPropertyImages] = useState({});
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
+
+  // useEffect for client-side filtering based on local search term
+  useEffect(() => {
+    const filtered = originalProperties.filter(property => {
+      const searchTerm = localSearchTerm.toLowerCase();
+      if (!searchTerm) return true; // If no search term, show all
+
+      return (
+        property.title?.toLowerCase().includes(searchTerm) ||
+        property.location?.toLowerCase().includes(searchTerm) ||
+        property.address?.toLowerCase().includes(searchTerm) ||
+        property.builder?.toLowerCase().includes(searchTerm) ||
+        property.bedrooms?.toString().includes(searchTerm)
+      );
+    });
+    setFilteredProperties(sortProperties(filtered, sortBy));
+  }, [localSearchTerm, originalProperties, sortBy]);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -62,7 +82,7 @@ const PropertySearch = ({ onFilterChange }) => {
         const data = await response.json();
         const propertiesList = data?.results || (Array.isArray(data) ? data : []);
         setOriginalProperties(propertiesList);
-        setFilteredProperties(sortProperties(propertiesList, sortBy));
+        // setFilteredProperties(sortProperties(propertiesList, sortBy)); // This will be handled by the other useEffect
       } catch (error) {
         console.error("Error fetching properties:", error);
         toast({ title: "Error", description: "Could not fetch properties." });
@@ -72,7 +92,8 @@ const PropertySearch = ({ onFilterChange }) => {
     };
 
     fetchProperties();
-  }, [searchParams, sortBy]);
+  }, [searchParams]); // Removed sortBy dependency to prevent re-fetching on sort change
+
 
   const sortProperties = (properties, sortType) => {
     const sorted = [...properties];
@@ -94,7 +115,7 @@ const PropertySearch = ({ onFilterChange }) => {
   const handleSortChange = (value) => {
     setSortBy(value);
     if (onFilterChange) {
-      onFilterChange({ sortBy: value, priceRange, propertyType, searchTerm });
+      onFilterChange({ sortBy: value, priceRange });
     }
   };
 
@@ -127,7 +148,16 @@ const PropertySearch = ({ onFilterChange }) => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold mb-2">Find Your Perfect Property</h2>
-          <p className="text-muted-foreground">Search across thousands of listings with advanced filters.</p>
+          <p className="text-muted-foreground mb-4">Search across thousands of listings with advanced filters.</p>
+          <div className="max-w-lg mx-auto relative">
+            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <Input
+              placeholder="Type to filter by title, location, builder..."
+              value={localSearchTerm}
+              onChange={(e) => setLocalSearchTerm(e.target.value)}
+              className="pl-10 w-full"
+            />
+          </div>
         </div>
         
       </div>
@@ -195,7 +225,7 @@ const PropertySearch = ({ onFilterChange }) => {
                     <p className="text-2xl font-extrabold text-primary">₹{parseFloat(property.price).toLocaleString('en-IN')}</p>
                     <div className="flex items-center gap-1 text-sm font-semibold">
                       <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                      <span>{property.ai_recommended_score ? (property.ai_recommended_score * 10).toFixed(1) : 'N/A'}</span>
+                      <span>{property.ai_recommended_score ? (property.ai_recommended_score * 5).toFixed(1) : 'N/A'}</span>
                     </div>
                   </div>
                   <div className="flex justify-around items-center text-center border-t border-b py-2 text-sm text-muted-foreground">
