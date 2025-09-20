@@ -142,13 +142,18 @@ const PostProperty = () => {
         }
       });
 
+      const token = localStorage.getItem("access_token");
       
-      const token = "AccessToken"; 
+      if (!token) {
+        console.error("❌ No access token found");
+        showMessage("error", "Authentication Error: Please log in again");
+        return;
+      } // Replace with actual token retrieval logic  
       
       console.log("Submitting property data:", Object.fromEntries(submitData.entries()));
       
       // Simulate API call
-      const response = await fetch("http://127.0.0.1:8000/api/properties/", {
+      const response = await fetch("http://127.0.0.1:8000/api/students/", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

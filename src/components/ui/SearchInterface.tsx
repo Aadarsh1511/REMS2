@@ -105,21 +105,40 @@ const SearchInterface = () => {
   };
 
   // API call for search
-  const handleSearch = async () => {
-    setLoading(true);
-    setResults([]);
-    try {
-      // Replace with your API endpoint and params
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/properties/search/?q=${encodeURIComponent(searchQuery)}&type=${dropdownValue}&tab=${activeSearchTab}`
-      );
-      const data = await response.json();
-      setResults(data.results || data); // Adjust according to your API response
-    } catch (error) {
-      setResults([]);
+ const handleSearch = async () => {
+  setLoading(true);
+  setResults([]);
+
+  try {
+    const token = localStorage.getItem("access_token");
+    console.log("Token from localStorage:", token);
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/api/properties/search/?q=${encodeURIComponent(searchQuery)}&type=${dropdownValue}&tab=${activeSearchTab}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,  // ya 'Token' depending on backend
+        }
+      }
+    );
+
+    console.log("Response status:", response.status);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+    setResults(data.results || data);
+  } catch (error) {
+    console.error("API Error:", error);
+    setResults([]);
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4">
@@ -235,9 +254,9 @@ const SearchInterface = () => {
               ))}
             </div>
           )}
-          {!loading && results.length === 0 && (
+          {/* {!loading && results.length === 0 && (
             <div className="text-center text-gray-400">No properties found.</div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

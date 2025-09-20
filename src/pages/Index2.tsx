@@ -1043,7 +1043,7 @@ export const Index2 = () => {
                             price={property.price}
                             rating={
                               property.ai_recommended_score
-                                ? (property.ai_recommended_score * 5).toFixed(1)
+                                ? parseFloat((property.ai_recommended_score * 5).toFixed(1))
                                 : undefined
                             }
                             amenities={property.amenities || []}
